@@ -18,28 +18,31 @@ jobs:
     name: Fetch iCal and update Firestore
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # 1 = Monday … 5 = Friday  (0 and 6 = Sunday and Saturday → skipped)
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.schedule == '*/30 * * * *' && contains(fromJSON('[1,2,3,4,5]'), fromJSON(format('{0}', env.DOW)))) }}
+    # Only triggered by the 30-min schedule or a manual dispatch
+    if: github.event.schedule == '*/30 * * * *' || github.event_name == 'workflow_dispatch'
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      - name: Get day of week
+      - name: Check day of week
         id: dow
-        run: echo "DOW=$(date +%u)" >> $GITHUB_ENV   # 1=Mon … 7=Sun
-
-      - name: Skip if weekend
-        if: ${{ env.DOW == '6' || env.DOW == '7' }}
+        # date +%u: 1=Mon … 5=Fri, 6=Sat, 7=Sun
         run: |
-          echo "Weekend — skipping timetable sync."
-          exit 0
+          DOW=$(date +%u)
+          echo "DOW=$DOW"
+          if [ "$DOW" -le 5 ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "Weekend — skipping timetable sync."
+          fi
 
       - name: Checkout code
-        if: ${{ env.DOW != '6' && env.DOW != '7' }}
+        if: steps.dow.outputs.should_run == 'true'
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        if: ${{ env.DOW != '6' && env.DOW != '7' }}
+        if: steps.dow.outputs.should_run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -47,12 +50,12 @@ jobs:
           cache-dependency-path: scripts/package-lock.json
 
       - name: Install dependencies
-        if: ${{ env.DOW != '6' && env.DOW != '7' }}
+        if: steps.dow.outputs.should_run == 'true'
         run: npm ci
         working-directory: scripts
 
       - name: Run timetable sync
-        if: ${{ env.DOW != '6' && env.DOW != '7' }}
+        if: steps.dow.outputs.should_run == 'true'
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: node sync_timetable.js
@@ -63,27 +66,30 @@ jobs:
     name: Reset classrooms for the new day
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule == '0 5 * * *' }}
+    # Only triggered by the 05:00 daily schedule or a manual dispatch
+    if: github.event.schedule == '0 5 * * *' || github.event_name == 'workflow_dispatch'
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      - name: Get day of week
+      - name: Check day of week
         id: dow
-        run: echo "DOW=$(date +%u)" >> $GITHUB_ENV   # 1=Mon … 7=Sun
-
-      - name: Skip if Sunday
-        if: ${{ env.DOW == '7' }}
         run: |
-          echo "Sunday — skipping daily reset."
-          exit 0
+          DOW=$(date +%u)
+          echo "DOW=$DOW"
+          if [ "$DOW" -le 6 ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "Sunday — skipping daily reset."
+          fi
 
       - name: Checkout code
-        if: ${{ env.DOW != '7' }}
+        if: steps.dow.outputs.should_run == 'true'
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        if: ${{ env.DOW != '7' }}
+        if: steps.dow.outputs.should_run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -91,12 +97,12 @@ jobs:
           cache-dependency-path: scripts/package-lock.json
 
       - name: Install dependencies
-        if: ${{ env.DOW != '7' }}
+        if: steps.dow.outputs.should_run == 'true'
         run: npm ci
         working-directory: scripts
 
       - name: Reset all classrooms
-        if: ${{ env.DOW != '7' }}
+        if: steps.dow.outputs.should_run == 'true'
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: node reset_classrooms.js
