@@ -1,0 +1,13 @@
+{
+  "name": "classroom-tracker-sync",
+  "version": "1.0.0",
+  "description": "iCal → Firestore timetable sync for ClassroomTracker",
+  "main": "sync_timetable.js",
+  "scripts": {
+    "sync": "node sync_timetable.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.3.0",
+    "node-ical": "^0.26.1"
+  }
+}
