@@ -1,25 +1,45 @@
 name: Sync Timetable
 
+# GitHub Actions cron does not support day-of-week filtering natively in a
+# way that prevents the job from being scheduled, so we use a weekday check
+# inside each job instead (see the `if:` conditions below).
+
 on:
   schedule:
-    # Every 30 minutes — safe within GitHub Actions free tier (2000 min/month)
-    # Adjust to */15 if the repo is public (unlimited minutes)
+    # Every 30 minutes (GitHub triggers this every day; weekday filter is in the job)
     - cron: "*/30 * * * *"
+    # 05:00 UTC = 07:00 Paris time (CEST) — daily reset before classes start
+    - cron: "0 5 * * *"
   workflow_dispatch: # Allow manual trigger from the GitHub UI
 
 jobs:
+  # ── Timetable sync — runs every 30 min, Monday–Friday only ─────────────────
   sync:
     name: Fetch iCal and update Firestore
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # 1 = Monday … 5 = Friday  (0 and 6 = Sunday and Saturday → skipped)
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.schedule == '*/30 * * * *' && contains(fromJSON('[1,2,3,4,5]'), fromJSON(format('{0}', env.DOW)))) }}
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
+      - name: Get day of week
+        id: dow
+        run: echo "DOW=$(date +%u)" >> $GITHUB_ENV   # 1=Mon … 7=Sun
+
+      - name: Skip if weekend
+        if: ${{ env.DOW == '6' || env.DOW == '7' }}
+        run: |
+          echo "Weekend — skipping timetable sync."
+          exit 0
+
       - name: Checkout code
+        if: ${{ env.DOW != '6' && env.DOW != '7' }}
         uses: actions/checkout@v4
 
       - name: Set up Node.js
+        if: ${{ env.DOW != '6' && env.DOW != '7' }}
         uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -27,13 +47,57 @@ jobs:
           cache-dependency-path: scripts/package-lock.json
 
       - name: Install dependencies
+        if: ${{ env.DOW != '6' && env.DOW != '7' }}
         run: npm ci
         working-directory: scripts
 
       - name: Run timetable sync
+        if: ${{ env.DOW != '6' && env.DOW != '7' }}
         env:
-          # Store the Firebase service account JSON as a GitHub secret named
-          # FIREBASE_SERVICE_ACCOUNT (see README for instructions)
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: node sync_timetable.js
+        working-directory: scripts
+
+  # ── Daily reset — runs at 05:00 UTC, Monday–Saturday ───────────────────────
+  reset:
+    name: Reset classrooms for the new day
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule == '0 5 * * *' }}
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Get day of week
+        id: dow
+        run: echo "DOW=$(date +%u)" >> $GITHUB_ENV   # 1=Mon … 7=Sun
+
+      - name: Skip if Sunday
+        if: ${{ env.DOW == '7' }}
+        run: |
+          echo "Sunday — skipping daily reset."
+          exit 0
+
+      - name: Checkout code
+        if: ${{ env.DOW != '7' }}
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        if: ${{ env.DOW != '7' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: scripts/package-lock.json
+
+      - name: Install dependencies
+        if: ${{ env.DOW != '7' }}
+        run: npm ci
+        working-directory: scripts
+
+      - name: Reset all classrooms
+        if: ${{ env.DOW != '7' }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node reset_classrooms.js
         working-directory: scripts
