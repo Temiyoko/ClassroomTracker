@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "35081935560",
+    "project_id": "classroomtracker-esiee",
+    "storage_bucket": "classroomtracker-esiee.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:35081935560:android:979b2ca90772f2e47be3fd",
+        "android_client_info": {
+          "package_name": "com.example.classroom_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9RybQgqF4Gkv9WS2jGRa6w6LipD-V5Ck"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
