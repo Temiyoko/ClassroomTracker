@@ -10,14 +10,17 @@ class AuthService with ChangeNotifier {
   String? get userName => _userName;
   String? get schoolOrg => _schoolOrg;
 
-  /// Always succeeds. Derives a display name from the email address.
-  Future<String?> login(String email, String password) async {
-    final trimmed = email.trim();
-    // Extract the local part of the email (before @), capitalise first letter
-    final local = trimmed.contains('@') ? trimmed.split('@').first : trimmed;
-    _userName =
-        local.isNotEmpty ? local[0].toUpperCase() + local.substring(1) : null;
-    _schoolOrg = trimmed.contains('@') ? trimmed.split('@').last : null;
+  /// Always succeeds. Derives a display name from the 'name.surname' identifier.
+  Future<String?> login(String identifier, String password) async {
+    final trimmed = identifier.trim();
+    // Extract the name part (before the first dot)
+    final namePart = trimmed.contains('.') ? trimmed.split('.').first : trimmed;
+    
+    _userName = namePart.isNotEmpty
+        ? namePart[0].toUpperCase() + namePart.substring(1).toLowerCase()
+        : null;
+    
+    _schoolOrg = "ESIEE Paris";
     notifyListeners();
     return null; // no error
   }

@@ -10,7 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _idController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
   bool _obscure = true;
@@ -24,17 +24,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _idController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    final email = _emailController.text.trim();
+    final identifier = _idController.text.trim();
     setState(() {
       _loading = true;
     });
-    await context.read<AuthService>().login(email, _passwordController.text);
+    await context.read<AuthService>().login(identifier, _passwordController.text);
     if (mounted) {
       setState(() {
         _loading = false;
@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Connectez-vous avec votre compte école',
+                'Connectez-vous avec votre compte Gustave Eiffel',
                 style: TextStyle(
                     fontSize: 14, color: _t3, fontWeight: FontWeight.w600),
               ),
@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Email
               const Text(
-                'EMAIL ÉTUDIANT',
+                'IDENTIFIANTS',
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
@@ -93,13 +93,13 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
+                controller: _idController,
+                keyboardType: TextInputType.text,
                 style: const TextStyle(color: _t1, fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
-                  hintText: 'prenom.nom@ecole.fr',
+                  hintText: 'prenom.nom',
                   hintStyle: const TextStyle(color: _t3),
-                  prefixIcon: const Icon(Icons.alternate_email_rounded,
+                  prefixIcon: const Icon(Icons.person_outline_rounded,
                       color: _t3, size: 20),
                   filled: true,
                   fillColor: _surface,
@@ -184,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 24),
               Center(
                 child: Text(
-                  'Vos identifiants sont ceux de votre ENT',
+                  'Vos identifiants sont ceux de l\'Université Gustave Eiffel',
                   style: const TextStyle(
                       fontSize: 12, color: _t3, fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
