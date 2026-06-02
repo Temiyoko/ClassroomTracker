@@ -1,1 +1,28 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"classroomtracker-esiee","appId":"1:35081935560:android:979b2ca90772f2e47be3fd","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"classroomtracker-esiee","configurations":{"android":"1:35081935560:android:979b2ca90772f2e47be3fd","ios":"1:35081935560:ios:fb357ab20f9d5f2e7be3fd","macos":"1:35081935560:ios:fb357ab20f9d5f2e7be3fd","web":"1:35081935560:web:33214fb6140ce5097be3fd","windows":"1:35081935560:web:b9b27f24326566aa7be3fd"}}}}}}
+{
+    "flutter":  {
+                    "platforms":  {
+                                      "android":  {
+                                                      "default":  {
+                                                                      "projectId":  "classroomtracker-esiee",
+                                                                      "appId":  "1:35081935560:android:979b2ca90772f2e47be3fd",
+                                                                      "fileOutput":  "android/app/google-services.json"
+                                                                  }
+                                                  },
+                                      "dart":  {
+                                                   "lib/firebase_options.dart":  {
+                                                                                     "projectId":  "classroomtracker-esiee",
+                                                                                     "configurations":  {
+                                                                                                            "android":  "1:35081935560:android:979b2ca90772f2e47be3fd",
+                                                                                                            "ios":  "1:35081935560:ios:fb357ab20f9d5f2e7be3fd",
+                                                                                                            "macos":  "1:35081935560:ios:fb357ab20f9d5f2e7be3fd",
+                                                                                                            "web":  "1:35081935560:web:33214fb6140ce5097be3fd",
+                                                                                                            "windows":  "1:35081935560:web:b9b27f24326566aa7be3fd"
+                                                                                                        }
+                                                                                 }
+                                               }
+                                  }
+                },
+    "functions":  {
+                      "source":  "functions"
+                  }
+}

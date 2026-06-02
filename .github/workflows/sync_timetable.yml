@@ -1,0 +1,37 @@
+name: Sync Timetable
+
+on:
+  schedule:
+    # Every 30 minutes — safe within GitHub Actions free tier (2000 min/month)
+    # Adjust to */15 if the repo is public (unlimited minutes)
+    - cron: "*/30 * * * *"
+  workflow_dispatch: # Allow manual trigger from the GitHub UI
+
+jobs:
+  sync:
+    name: Fetch iCal and update Firestore
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: scripts/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: scripts
+
+      - name: Run timetable sync
+        env:
+          # Store the Firebase service account JSON as a GitHub secret named
+          # FIREBASE_SERVICE_ACCOUNT (see README for instructions)
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node sync_timetable.js
+        working-directory: scripts
