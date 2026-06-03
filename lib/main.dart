@@ -40,7 +40,7 @@ class ClassroomTrackerApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Campus Tracker',
+        title: 'Classroom Tracker',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,

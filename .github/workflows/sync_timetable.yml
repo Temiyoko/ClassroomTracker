@@ -6,12 +6,6 @@ name: Sync Timetable
 
 on:
   schedule:
-    # Run every 15 minutes from 06:00–17:45 UTC (08:00–19:45 Paris CEST)
-    # Covers all class boundaries (:00, :15, :30). Even with GitHub's runner
-    # delay the result is accurate because we check the current state and
-    # classes last at least 30 min.
-    # Starts at 06:00 UTC (not 05:00) to avoid racing with the reset job.
-    - cron: "*/15 6-17 * * *"
     # 05:00 UTC = 07:00 Paris time (CEST) — daily reset before classes start
     - cron: "0 5 * * *"
   workflow_dispatch: # Allow manual trigger from the GitHub UI
@@ -35,10 +29,9 @@ jobs:
     name: Fetch iCal and update Firestore
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Triggered by schedule OR manual choice (sync/both)
+    # Triggered by manual choice (sync/both)
     if: |
-      github.event.schedule == '*/15 6-17 * * *' || 
-      (github.event_name == 'workflow_dispatch' && (inputs.action == 'sync' || inputs.action == 'both'))
+      github.event_name == 'workflow_dispatch' && (inputs.action == 'sync' || inputs.action == 'both')
 
     steps:
       - name: Check day of week
