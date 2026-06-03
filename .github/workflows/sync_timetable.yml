@@ -11,18 +11,30 @@ on:
     # 05:00 UTC = 07:00 Paris time (CEST) — daily reset before classes start
     - cron: "0 5 * * *"
   workflow_dispatch: # Allow manual trigger from the GitHub UI
+    inputs:
+      action:
+        description: 'Action à effectuer'
+        required: true
+        default: 'sync'
+        type: choice
+        options:
+          - sync
+          - reset
+          - both
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # ── Timetable sync — runs every 30 min, Monday–Friday only ─────────────────
+  # ── Timetable sync — runs every hour at :45, Monday–Friday only ────────────
   sync:
     name: Fetch iCal and update Firestore
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Only triggered by the 45-min schedule or a manual dispatch
-    if: github.event.schedule == '45 * * * *' || github.event_name == 'workflow_dispatch'
+    # Triggered by schedule OR manual choice (sync/both)
+    if: |
+      github.event.schedule == '45 * * * *' || 
+      (github.event_name == 'workflow_dispatch' && (inputs.action == 'sync' || inputs.action == 'both'))
 
     steps:
       - name: Check day of week
@@ -67,8 +79,10 @@ jobs:
     name: Reset classrooms for the new day
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Only triggered by the 05:00 daily schedule or a manual dispatch
-    if: github.event.schedule == '0 5 * * *' || github.event_name == 'workflow_dispatch'
+    # Triggered by schedule OR manual choice (reset/both)
+    if: |
+      github.event.schedule == '0 5 * * *' || 
+      (github.event_name == 'workflow_dispatch' && (inputs.action == 'reset' || inputs.action == 'both'))
 
     steps:
       - name: Check day of week
