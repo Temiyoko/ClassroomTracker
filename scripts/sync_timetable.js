@@ -60,7 +60,9 @@ function buildIcalUrl(resourceId) {
 // ── iCal parsing ─────────────────────────────────────────────────────────────
 
 /**
- * Returns true if any VEVENT in the calendar is currently happening OR starting in the next 30 minutes.
+ * Returns true if any VEVENT covers the point 15 minutes from now.
+ * Running at :55 and checking :55+15 = the next :10 gives a clean
+ * "will there be a course in the next slot?" answer before the hour turns.
  * @param {string} url
  * @returns {Promise<boolean>}
  */
@@ -72,8 +74,8 @@ async function hasCourseNow(url) {
     throw new Error(`Failed to fetch iCal from ${url}: ${err.message}`);
   }
 
-  const now = new Date();
-  const buffer = 30 * 60 * 1000; // 30 minutes in milliseconds
+  // Check the state 15 minutes from now (e.g. at 10:55 → check 11:10)
+  const checkAt = new Date(Date.now() + 15 * 60 * 1000);
 
   for (const key of Object.keys(events)) {
     const ev = events[key];
@@ -82,8 +84,7 @@ async function hasCourseNow(url) {
     const start = ev.start instanceof Date ? ev.start : new Date(ev.start);
     const end = ev.end instanceof Date ? ev.end : new Date(ev.end);
 
-    // Busy if currently happening OR starting in the next 30 minutes
-    if (now >= new Date(start.getTime() - buffer) && now <= end) {
+    if (start <= checkAt && checkAt < end) {
       return true;
     }
   }
