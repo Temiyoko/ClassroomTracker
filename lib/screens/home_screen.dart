@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
 import '../services/classroom_service.dart';
+import '../services/notification_service.dart';
 import '../models/classroom.dart';
 
 // ─── Palette ───────────────────────────────────────────────────────────────
@@ -63,7 +65,10 @@ class HomeScreen extends StatelessWidget {
 
     final free = all.where((r) => r.currentPeople == 0 && !r.hasCourse).length;
     final busy = all.where((r) => r.currentPeople > 0 || r.hasCourse).length;
+    final withCourse = all.where((r) => r.hasCourse).length;
     final pct = all.isEmpty ? 0 : (busy * 100 / all.length).round();
+    final freeFavs =
+        favs.where((r) => r.currentPeople == 0 && !r.hasCourse).toList();
 
     return Scaffold(
       backgroundColor: _bg,
@@ -100,7 +105,7 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    _NotifButton(onTap: () {}),
+                    const _NotifButton(),
                   ],
                 ),
               ),
@@ -111,7 +116,11 @@ class HomeScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                 child: _HeroCard(
-                    pct: pct, free: free, busy: busy, total: all.length),
+                    pct: pct,
+                    free: free,
+                    busy: busy,
+                    total: all.length,
+                    withCourse: withCourse),
               ),
             ),
 
@@ -179,19 +188,187 @@ class HomeScreen extends StatelessWidget {
 
 // ─── Widgets ────────────────────────────────────────────────────────────────
 class _NotifButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _NotifButton({required this.onTap});
+  const _NotifButton();
+
+  void _showNotificationCenter(BuildContext context) {
+    final notifSvc = context.read<NotificationService>();
+    notifSvc.markAllAsRead();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, scrollController) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: _t3, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Notifications',
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: _t1)),
+                  TextButton(
+                    onPressed: () {
+                      notifSvc.clearAll();
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Tout effacer',
+                        style: TextStyle(color: _er, fontSize: 13)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: Consumer<NotificationService>(
+                  builder: (context, svc, _) {
+                    final notifications = svc.notifications;
+                    if (notifications.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.notifications_none_rounded,
+                                size: 48, color: _t3.withAlpha(50)),
+                            const SizedBox(height: 16),
+                            const Text('Aucune notification',
+                                style: TextStyle(
+                                    color: _t3, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      controller: scrollController,
+                      itemCount: notifications.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (_, i) {
+                        final n = notifications[i];
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _bg,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: _okBg,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.check_circle_outline,
+                                    color: _ok, size: 20),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(n.title,
+                                            style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w800,
+                                                color: _t1)),
+                                        Text(
+                                          DateFormat('HH:mm').format(n.timestamp),
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: _t3),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(n.body,
+                                        style: const TextStyle(
+                                            fontSize: 13,
+                                            color: _t2,
+                                            height: 1.4)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final unread = context.select<NotificationService, int>((s) => s.unreadCount);
+
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-            color: _surface, borderRadius: BorderRadius.circular(14)),
-        child: const Icon(Icons.notifications_outlined, color: _t2, size: 22),
+      onTap: () => _showNotificationCenter(context),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+                color: _surface, borderRadius: BorderRadius.circular(14)),
+            child:
+                const Icon(Icons.notifications_outlined, color: _t2, size: 22),
+          ),
+          if (unread > 0)
+            Positioned(
+              top: -3,
+              right: -3,
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: _er,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _bg, width: 2),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  unread > 9 ? '9+' : '$unread',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -228,12 +405,13 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _HeroCard extends StatelessWidget {
-  final int pct, free, busy, total;
+  final int pct, free, busy, total, withCourse;
   const _HeroCard(
       {required this.pct,
       required this.free,
       required this.busy,
-      required this.total});
+      required this.total,
+      required this.withCourse});
 
   @override
   Widget build(BuildContext context) {
@@ -280,7 +458,7 @@ class _HeroCard extends StatelessWidget {
             children: [
               _HeroStat(value: '$free', label: 'Libres'),
               const SizedBox(width: 10),
-              _HeroStat(value: '${total - free - busy}', label: 'Hors ligne'),
+              _HeroStat(value: '$withCourse', label: 'En cours'),
             ],
           ),
         ],

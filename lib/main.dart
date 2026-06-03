@@ -8,6 +8,7 @@ import 'screens/classroom_list_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
 import 'services/classroom_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +30,14 @@ class ClassroomTrackerApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
-        ChangeNotifierProvider(create: (_) => ClassroomService()),
+        ChangeNotifierProvider(create: (_) => NotificationService()),
+        ChangeNotifierProxyProvider<NotificationService, ClassroomService>(
+          create: (_) => ClassroomService(),
+          update: (_, notifSvc, classroomSvc) {
+            classroomSvc!.updateNotificationService(notifSvc);
+            return classroomSvc;
+          },
+        ),
       ],
       child: MaterialApp(
         title: 'Campus Tracker',

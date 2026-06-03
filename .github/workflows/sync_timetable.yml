@@ -6,11 +6,14 @@ name: Sync Timetable
 
 on:
   schedule:
-    # Every 30 minutes (GitHub triggers this every day; weekday filter is in the job)
-    - cron: "*/30 * * * *"
+    # 15 minutes before every hour (e.g., 07:45, 08:45)
+    - cron: "45 * * * *"
     # 05:00 UTC = 07:00 Paris time (CEST) — daily reset before classes start
     - cron: "0 5 * * *"
   workflow_dispatch: # Allow manual trigger from the GitHub UI
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # ── Timetable sync — runs every 30 min, Monday–Friday only ─────────────────
@@ -18,10 +21,8 @@ jobs:
     name: Fetch iCal and update Firestore
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Only triggered by the 30-min schedule or a manual dispatch
-    if: github.event.schedule == '*/30 * * * *' || github.event_name == 'workflow_dispatch'
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    # Only triggered by the 45-min schedule or a manual dispatch
+    if: github.event.schedule == '45 * * * *' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Check day of week
@@ -68,8 +69,6 @@ jobs:
     timeout-minutes: 5
     # Only triggered by the 05:00 daily schedule or a manual dispatch
     if: github.event.schedule == '0 5 * * *' || github.event_name == 'workflow_dispatch'
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Check day of week

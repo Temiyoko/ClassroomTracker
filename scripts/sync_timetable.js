@@ -60,7 +60,7 @@ function buildIcalUrl(resourceId) {
 // ── iCal parsing ─────────────────────────────────────────────────────────────
 
 /**
- * Returns true if any VEVENT in the calendar is currently happening.
+ * Returns true if any VEVENT in the calendar is currently happening OR starting in the next 30 minutes.
  * @param {string} url
  * @returns {Promise<boolean>}
  */
@@ -73,6 +73,7 @@ async function hasCourseNow(url) {
   }
 
   const now = new Date();
+  const buffer = 30 * 60 * 1000; // 30 minutes in milliseconds
 
   for (const key of Object.keys(events)) {
     const ev = events[key];
@@ -81,7 +82,8 @@ async function hasCourseNow(url) {
     const start = ev.start instanceof Date ? ev.start : new Date(ev.start);
     const end = ev.end instanceof Date ? ev.end : new Date(ev.end);
 
-    if (start <= now && end >= now) {
+    // Busy if currently happening OR starting in the next 30 minutes
+    if (now >= new Date(start.getTime() - buffer) && now <= end) {
       return true;
     }
   }
