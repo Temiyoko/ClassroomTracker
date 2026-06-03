@@ -60,9 +60,11 @@ function buildIcalUrl(resourceId) {
 // ── iCal parsing ─────────────────────────────────────────────────────────────
 
 /**
- * Returns true if any VEVENT covers the point 15 minutes from now.
- * Running at :55 and checking :55+15 = the next :10 gives a clean
- * "will there be a course in the next slot?" answer before the hour turns.
+ * Returns true if any VEVENT is happening right now.
+ * We run every 15 minutes so we cover all class boundaries (:00, :15, :30).
+ * Checking the current moment (not a future look-ahead) is more accurate:
+ * classes last at least 30–60 min, so even if the GitHub Actions runner fires
+ * 10–15 min late, the result is still correct.
  * @param {string} url
  * @returns {Promise<boolean>}
  */
@@ -74,8 +76,7 @@ async function hasCourseNow(url) {
     throw new Error(`Failed to fetch iCal from ${url}: ${err.message}`);
   }
 
-  // Check the state 15 minutes from now (e.g. at 10:55 → check 11:10)
-  const checkAt = new Date(Date.now() + 15 * 60 * 1000);
+  const now = new Date();
 
   for (const key of Object.keys(events)) {
     const ev = events[key];
@@ -84,7 +85,7 @@ async function hasCourseNow(url) {
     const start = ev.start instanceof Date ? ev.start : new Date(ev.start);
     const end = ev.end instanceof Date ? ev.end : new Date(ev.end);
 
-    if (start <= checkAt && checkAt < end) {
+    if (start <= now && now < end) {
       return true;
     }
   }

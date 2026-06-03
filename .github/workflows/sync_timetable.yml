@@ -6,9 +6,12 @@ name: Sync Timetable
 
 on:
   schedule:
-    # Run at :25 and :55 of each hour, 07:25–19:55 Paris time (CEST = UTC+2, so 05:25–17:55 UTC)
-    # Two runs per hour = more accurate; 15-min look-ahead keeps results relevant
-    - cron: "25,55 5-17 * * *"
+    # Run every 15 minutes from 06:00–17:45 UTC (08:00–19:45 Paris CEST)
+    # Covers all class boundaries (:00, :15, :30). Even with GitHub's runner
+    # delay the result is accurate because we check the current state and
+    # classes last at least 30 min.
+    # Starts at 06:00 UTC (not 05:00) to avoid racing with the reset job.
+    - cron: "*/15 6-17 * * *"
     # 05:00 UTC = 07:00 Paris time (CEST) — daily reset before classes start
     - cron: "0 5 * * *"
   workflow_dispatch: # Allow manual trigger from the GitHub UI
@@ -34,7 +37,7 @@ jobs:
     timeout-minutes: 5
     # Triggered by schedule OR manual choice (sync/both)
     if: |
-      github.event.schedule == '25,55 5-17 * * *' || 
+      github.event.schedule == '*/15 6-17 * * *' || 
       (github.event_name == 'workflow_dispatch' && (inputs.action == 'sync' || inputs.action == 'both'))
 
     steps:

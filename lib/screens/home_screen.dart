@@ -67,8 +67,6 @@ class HomeScreen extends StatelessWidget {
     final busy = all.where((r) => r.currentPeople > 0 || r.hasCourse).length;
     final withCourse = all.where((r) => r.hasCourse).length;
     final pct = all.isEmpty ? 0 : (busy * 100 / all.length).round();
-    final freeFavs =
-        favs.where((r) => r.currentPeople == 0 && !r.hasCourse).toList();
 
     return Scaffold(
       backgroundColor: _bg,
