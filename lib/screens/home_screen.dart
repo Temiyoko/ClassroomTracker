@@ -246,7 +246,7 @@ class _NotifButton extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.notifications_none_rounded,
-                                size: 48, color: _t3.withAlpha(50)),
+                                size: 48, color: _t3.withValues(alpha: 50 / 255)),
                             const SizedBox(height: 16),
                             const Text('Aucune notification',
                                 style: TextStyle(
@@ -474,7 +474,7 @@ class _HeroStat extends StatelessWidget {
     return Expanded(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withAlpha(20),
+          color: Colors.white.withValues(alpha: 20 / 255),
           borderRadius: BorderRadius.circular(14),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

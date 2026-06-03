@@ -63,6 +63,7 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
   late TextEditingController _search;
   int? _floor;
   int? _corridor;
+  RoomType? _type;
   _StatusFilter _status = _StatusFilter.all;
 
   @override
@@ -81,6 +82,7 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
     return all.where((r) {
       if (_floor != null && r.floor != _floor) return false;
       if (_corridor != null && r.corridor != _corridor) return false;
+      if (_type != null && r.type != _type) return false;
       if (_search.text.isNotEmpty &&
           !r.name.toLowerCase().contains(_search.text.toLowerCase())) {
         return false;
@@ -98,26 +100,185 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
     }).toList();
   }
 
+  void _showFilterMenu(List<Classroom> all) {
+    final floors = <int?>[
+      ...(all.map((r) => r.floor).toSet().toList()..sort())
+    ];
+    final corridors = <int?>[
+      ...(all.map((r) => r.corridor).toSet().toList()..sort())
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: _surface3,
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Filtres',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: _t1)),
+                    TextButton(
+                      onPressed: () {
+                        setModalState(() {
+                          _status = _StatusFilter.all;
+                          _floor = null;
+                          _corridor = null;
+                          _type = null;
+                        });
+                        setState(() {});
+                      },
+                      child: const Text('Réinitialiser',
+                          style: TextStyle(color: _primary, fontSize: 13)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // ── Section: Statut ──
+                const _FilterLabel(label: 'Statut'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _StatusFilter.values.map<Widget>((f) {
+                    final labels = {
+                      _StatusFilter.all: 'Toutes',
+                      _StatusFilter.libre: 'Libres',
+                      _StatusFilter.occupee: 'Occupées',
+                      _StatusFilter.cours: 'Cours',
+                    };
+                    final on = _status == f;
+                    return _MenuChip(
+                      label: labels[f]!,
+                      active: on,
+                      onTap: () {
+                        setModalState(() => _status = f);
+                        setState(() {});
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Section: Type ──
+                const _FilterLabel(label: 'Type de salle'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _MenuChip(
+                      label: 'Tous',
+                      active: _type == null,
+                      onTap: () {
+                        setModalState(() => _type = null);
+                        setState(() {});
+                      },
+                    ),
+                    ...RoomType.values.map<Widget>((t) {
+                      final label = {
+                        RoomType.classroom: 'Salle',
+                        RoomType.laboratory: 'Labo',
+                        RoomType.amphitheater: 'Amphi',
+                      }[t]!;
+                      return _MenuChip(
+                        label: label,
+                        active: _type == t,
+                        onTap: () {
+                          setModalState(() => _type = t);
+                          setState(() {});
+                        },
+                      );
+                    }),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // ── Section: Étage & Épi ──
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _FilterLabel(label: 'Étage'),
+                          const SizedBox(height: 8),
+                          _MenuDrop<int?>(
+                            value: _floor,
+                            items: [null, ...floors],
+                            label: (v) => v == null ? 'Tous' : 'Étage $v',
+                            onChanged: (v) {
+                              setModalState(() => _floor = v);
+                              setState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _FilterLabel(label: 'Épi'),
+                          const SizedBox(height: 8),
+                          _MenuDrop<int?>(
+                            value: _corridor,
+                            items: [null, ...corridors],
+                            label: (v) => v == null ? 'Tous' : 'Épi $v',
+                            onChanged: (v) {
+                              setModalState(() => _corridor = v);
+                              setState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final svc = context.watch<ClassroomService>();
     final all = svc.classrooms;
-
-    // Build filter options from actual data
-    final floors = <int?>[
-      null,
-      ...(all.map((r) => r.floor).toSet().toList()..sort())
-    ];
-    final corridors = <int?>[
-      null,
-      ...(all.map((r) => r.corridor).toSet().toList()..sort())
-    ];
-
-    // If selected filter no longer exists in data, reset it
-    if (_floor != null && !floors.contains(_floor)) _floor = null;
-    if (_corridor != null && !corridors.contains(_corridor)) _corridor = null;
-
     final rooms = _filter(all);
+
+    final hasFilters = _status != _StatusFilter.all ||
+        _floor != null ||
+        _corridor != null ||
+        _type != null;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -125,15 +286,56 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Title ──────────────────────────────────────────────────────
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 20, 20, 16),
-              child: Text('Salles',
-                  style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
-                      color: _t1,
-                      letterSpacing: -.5)),
+            // ── Header ─────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Salles',
+                      style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w900,
+                          color: _t1,
+                          letterSpacing: -.5)),
+                  GestureDetector(
+                    onTap: () => _showFilterMenu(all),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: hasFilters ? _priCont : _surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: hasFilters
+                            ? Border.all(color: _primary.withValues(alpha: 0.3))
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.tune_rounded,
+                              size: 18,
+                              color: hasFilters ? _primary : _t3),
+                          const SizedBox(width: 8),
+                          Text('Filtres',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: hasFilters ? _primary : _t3)),
+                          if (hasFilters) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                  color: _primary, shape: BoxShape.circle),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             // ── Search bar ─────────────────────────────────────────────────
@@ -176,60 +378,7 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
               ),
             ),
 
-            const SizedBox(height: 12),
-
-            // ── Filter chips row ───────────────────────────────────────────
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  // Status filter
-                  ..._StatusFilter.values.map((f) {
-                    final labels = {
-                      _StatusFilter.all: 'Toutes',
-                      _StatusFilter.libre: 'Libres',
-                      _StatusFilter.occupee: 'Occupées',
-                      _StatusFilter.cours: 'Cours',
-                    };
-                    final on = _status == f;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: _FilterChip(
-                        label: labels[f]!,
-                        active: on,
-                        onTap: () => setState(() => _status = f),
-                      ),
-                    );
-                  }),
-                  const SizedBox(width: 8),
-
-                  // Floor picker
-                  _DropChip<int?>(
-                    label: _floor == null ? 'Étage' : 'Étage $_floor',
-                    active: _floor != null,
-                    items: floors,
-                    value: _floor,
-                    itemLabel: (v) =>
-                        v == null ? 'Tous les étages' : 'Étage $v',
-                    onChanged: (v) => setState(() => _floor = v),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Épi picker
-                  _DropChip<int?>(
-                    label: _corridor == null ? 'Épi' : 'Épi $_corridor',
-                    active: _corridor != null,
-                    items: corridors,
-                    value: _corridor,
-                    itemLabel: (v) => v == null ? 'Tous les épis' : 'Épi $v',
-                    onChanged: (v) => setState(() => _corridor = v),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             // ── Result count ───────────────────────────────────────────────
             Padding(
@@ -268,31 +417,48 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
   }
 }
 
-// ─── Chips ──────────────────────────────────────────────────────────────────
-class _FilterChip extends StatelessWidget {
+// ─── Menu Widgets ───────────────────────────────────────────────────────────
+class _FilterLabel extends StatelessWidget {
+  final String label;
+  const _FilterLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(label.toUpperCase(),
+        style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: _t3,
+            letterSpacing: 1));
+  }
+}
+
+class _MenuChip extends StatelessWidget {
   final String label;
   final bool active;
   final VoidCallback onTap;
-  const _FilterChip(
+  const _MenuChip(
       {required this.label, required this.active, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? _priCont : _surface,
-          borderRadius: BorderRadius.circular(20),
+          color: active ? _priCont : _surface2,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: active ? _primary.withValues(alpha: 0.5) : Colors.transparent),
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: FontWeight.w800,
-            color: active ? _primary : _t3,
-            letterSpacing: .2,
+            color: active ? _primary : _t1,
           ),
         ),
       ),
@@ -300,86 +466,45 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _DropChip<T> extends StatelessWidget {
-  final String label;
-  final bool active;
-  final List<T> items;
+class _MenuDrop<T> extends StatelessWidget {
   final T value;
-  final String Function(T) itemLabel;
+  final List<T> items;
+  final String Function(T) label;
   final ValueChanged<T> onChanged;
-  const _DropChip({
-    required this.label,
-    required this.active,
-    required this.items,
-    required this.value,
-    required this.itemLabel,
-    required this.onChanged,
-  });
+  const _MenuDrop(
+      {required this.value,
+        required this.items,
+        required this.label,
+        required this.onChanged});
+
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        final res = await showModalBottomSheet<List<T>>(
-          context: context,
-          backgroundColor: _surface2,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          builder: (_) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                      color: _surface3,
-                      borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 16),
-              ...items.map((i) => ListTile(
-                    title: Text(itemLabel(i),
-                        style: TextStyle(
-                          color: i == value ? _primary : _t1,
-                          fontWeight:
-                              i == value ? FontWeight.w800 : FontWeight.w600,
-                        )),
-                    trailing: i == value
-                        ? const Icon(Icons.check_rounded, color: _primary)
-                        : null,
-                    onTap: () => Navigator.pop(context, [i]),
-                  )),
-              const SizedBox(height: 12),
-            ],
-          ),
-        );
-        if (res != null) {
-          onChanged(res.first);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? _priCont : _surface,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: active ? _primary : _t3,
-                letterSpacing: .2,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.expand_more_rounded,
-                size: 16, color: active ? _primary : _t3),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: _surface2,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: DropdownButton<T>(
+        value: value,
+        items: items
+            .map((i) => DropdownMenuItem(
+          value: i,
+          child: Text(label(i),
+              style: const TextStyle(
+                  color: _t1,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600)),
+        ))
+            .toList(),
+        onChanged: (v) {
+          if (v != null || items.contains(null)) onChanged(v as T);
+        },
+        underline: const SizedBox(),
+        isExpanded: true,
+        dropdownColor: _surface3,
+        icon: const Icon(Icons.expand_more_rounded, color: _t3),
       ),
     );
   }

@@ -1,4 +1,4 @@
-enum RoomType { classroom, laboratory, amphitheater, other }
+enum RoomType { classroom, laboratory, amphitheater }
 
 class Classroom {
   final String id;
@@ -29,8 +29,6 @@ class Classroom {
         return 'Laboratoire';
       case RoomType.amphitheater:
         return 'Amphithéâtre';
-      default:
-        return 'Autre';
     }
   }
 
