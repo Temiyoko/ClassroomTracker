@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
 import '../services/auth_service.dart';
 import '../services/classroom_service.dart';
 import '../services/notification_service.dart';
@@ -393,8 +394,7 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
-
-class _HeroCard extends StatelessWidget {
+class _HeroCard extends StatefulWidget {
   final int pct, free, busy, total, withCourse;
   const _HeroCard(
       {required this.pct,
@@ -404,64 +404,150 @@ class _HeroCard extends StatelessWidget {
       required this.withCourse});
 
   @override
+  State<_HeroCard> createState() => _HeroCardState();
+}
+
+class _HeroCardState extends State<_HeroCard> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = cs.brightness == Brightness.dark;
 
     final bg = isDark ? cs.onPrimary : cs.primary;
     final fg = isDark ? cs.primary : cs.onPrimary;
+    final waveColor = fg.withValues(alpha: 0.05);
 
     return Container(
       decoration: BoxDecoration(
           color: bg, borderRadius: BorderRadius.circular(28)),
-      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
         children: [
-          Text('OCCUPATION GLOBALE',
-              style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: fg,
-                  letterSpacing: 1)),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('$pct',
-                  style: TextStyle(
-                      fontSize: 72,
-                      fontWeight: FontWeight.w900,
-                      color: fg,
-                      letterSpacing: -3,
-                      height: 1)),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10, left: 4),
-                child: Text('%',
-                    style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: fg.withValues(alpha: 0.9))),
-              ),
-            ],
+          // Wave effect
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: _WavePainter(
+                    waveValue: _controller.value,
+                    fillLevel: widget.pct / 100,
+                    color: waveColor,
+                  ),
+                );
+              },
+            ),
           ),
-          Text(
-              '$busy salle${busy > 1 ? 's' : ''} occupée${busy > 1 ? 's' : ''} sur $total',
-              style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w700, color: fg)),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _HeroStat(value: '$free', label: 'Libres', color: fg),
-              const SizedBox(width: 10),
-              _HeroStat(value: '$withCourse', label: 'En cours', color: fg),
-            ],
+          // Content
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('OCCUPATION GLOBALE',
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: fg,
+                        letterSpacing: 1)),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('${widget.pct}',
+                        style: TextStyle(
+                            fontSize: 72,
+                            fontWeight: FontWeight.w900,
+                            color: fg,
+                            letterSpacing: -3,
+                            height: 1)),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10, left: 4),
+                      child: Text('%',
+                          style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              color: fg.withValues(alpha: 0.9))),
+                    ),
+                  ],
+                ),
+                Text(
+                    '${widget.busy} salle${widget.busy > 1 ? 's' : ''} occupée${widget.busy > 1 ? 's' : ''} sur ${widget.total}',
+                    style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700, color: fg)),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _HeroStat(value: '${widget.free}', label: 'Libres', color: fg),
+                    const SizedBox(width: 10),
+                    _HeroStat(value: '${widget.withCourse}', label: 'En cours', color: fg),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 }
+
+class _WavePainter extends CustomPainter {
+  final double waveValue;
+  final double fillLevel;
+  final Color color;
+
+  _WavePainter({
+    required this.waveValue,
+    required this.fillLevel,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final path = Path();
+
+    double amplitude = 8.0;
+    double wavelength = size.width;
+    double baseHeight = size.height * (1 - fillLevel);
+
+    path.moveTo(0, baseHeight);
+
+    for (double x = 0; x <= size.width; x++) {
+      double y = math.sin((x / wavelength * 2 * math.pi) + (waveValue * 2 * math.pi)) * amplitude + baseHeight;
+      path.lineTo(x, y);
+    }
+
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_WavePainter oldDelegate) =>
+      oldDelegate.waveValue != waveValue || oldDelegate.fillLevel != fillLevel;
+}
+
 
 class _HeroStat extends StatelessWidget {
   final String value, label;
