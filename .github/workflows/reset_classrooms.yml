@@ -1,4 +1,4 @@
-name: Sync Timetable
+name: Reset Classrooms
 
 on:
   workflow_dispatch: # Allow manual trigger from the GitHub UI
@@ -7,11 +7,12 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # ── Timetable sync ────────────
-  sync:
-    name: Fetch iCal and update Firestore
+  # ── Daily reset ───────────────────────
+  reset:
+    name: Reset classrooms for the new day
     runs-on: ubuntu-latest
     steps:
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -26,8 +27,8 @@ jobs:
         run: npm ci
         working-directory: scripts
 
-      - name: Run timetable sync
+      - name: Reset all classrooms
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: node sync_timetable.js
+        run: node reset_classrooms.js
         working-directory: scripts
