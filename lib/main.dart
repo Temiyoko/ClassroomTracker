@@ -9,6 +9,8 @@ import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
 import 'services/classroom_service.dart';
 import 'services/notification_service.dart';
+import 'services/theme_service.dart';
+import 'screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +31,7 @@ class ClassroomTrackerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => NotificationService()),
         ChangeNotifierProxyProvider<NotificationService, ClassroomService>(
@@ -39,54 +42,31 @@ class ClassroomTrackerApp extends StatelessWidget {
           },
         ),
       ],
-      child: MaterialApp(
-        title: 'Classroom Tracker',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          colorScheme: ColorScheme.dark(
-            primary: const Color(0xFFC9B8FF),
-            onPrimary: const Color(0xFF1C1A22),
-            primaryContainer: const Color(0xFF3A2E6A),
-            onPrimaryContainer: const Color(0xFFEDE0FF),
-            secondary: const Color(0xFF94D4A4),
-            tertiary: const Color(0xFFF2C469),
-            error: const Color(0xFFF28E8A),
-            surface: const Color(0xFF1C1A22),
-            onSurface: const Color(0xFFEDE8F5),
-          ),
-          scaffoldBackgroundColor: const Color(0xFF0F0D13),
-          fontFamily: 'Nunito',
-          cardTheme: CardThemeData(
-            color: const Color(0xFF1C1A22),
-            elevation: 0,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: const Color(0xFF1C1A22),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+      child: Consumer<ThemeService>(
+        builder: (context, themeSvc, _) {
+          return MaterialApp(
+            title: 'Classroom Tracker',
+            debugShowCheckedModeBanner: false,
+            themeMode: themeSvc.themeMode,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: themeSvc.seedColor,
+                brightness: Brightness.light,
+              ),
+              fontFamily: 'Nunito',
             ),
-            hintStyle: const TextStyle(color: Color(0xFF7B7585)),
-          ),
-          textTheme: const TextTheme(
-            displayLarge: TextStyle(
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w900,
-                color: Color(0xFFEDE8F5)),
-            titleLarge: TextStyle(
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w800,
-                color: Color(0xFFEDE8F5)),
-            bodyMedium:
-                TextStyle(fontFamily: 'Nunito', color: Color(0xFFC4BDD1)),
-          ),
-        ),
-        home: const AuthWrapper(),
+            darkTheme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: themeSvc.seedColor,
+                brightness: Brightness.dark,
+              ),
+              fontFamily: 'Nunito',
+            ),
+            home: const AuthWrapper(),
+          );
+        },
       ),
     );
   }
@@ -118,6 +98,7 @@ class _MainShellState extends State<MainShell> {
   static const _screens = [
     HomeScreen(),
     ClassroomListScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -127,27 +108,33 @@ class _MainShellState extends State<MainShell> {
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1A22),
-          border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 15 / 255))),
+          color: cs.surfaceContainer,
+          border: Border(top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.2))),
         ),
         child: NavigationBar(
           selectedIndex: _currentIndex,
           onDestinationSelected: (i) => setState(() => _currentIndex = i),
           backgroundColor: Colors.transparent,
-          indicatorColor: const Color(0xFF3A2E6A),
+          indicatorColor: cs.primaryContainer,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: [
             NavigationDestination(
               icon: Icon(Icons.dashboard_outlined,
-                  color: const Color(0xFF7B7585)),
-              selectedIcon: Icon(Icons.dashboard_rounded, color: cs.primary),
+                  color: cs.onSurfaceVariant),
+              selectedIcon: Icon(Icons.dashboard_rounded, color: cs.onPrimaryContainer),
               label: 'Accueil',
             ),
             NavigationDestination(
               icon: Icon(Icons.meeting_room_outlined,
-                  color: const Color(0xFF7B7585)),
-              selectedIcon: Icon(Icons.meeting_room_rounded, color: cs.primary),
+                  color: cs.onSurfaceVariant),
+              selectedIcon: Icon(Icons.meeting_room_rounded, color: cs.onPrimaryContainer),
               label: 'Salles',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.settings_outlined,
+                  color: cs.onSurfaceVariant),
+              selectedIcon: Icon(Icons.settings_rounded, color: cs.onPrimaryContainer),
+              label: 'Paramètres',
             ),
           ],
         ),

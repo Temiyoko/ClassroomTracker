@@ -15,13 +15,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   bool _obscure = true;
 
-  static const _bg = Color(0xFF0F0D13);
-  static const _surface = Color(0xFF1C1A22);
-  static const _primary = Color(0xFFC9B8FF);
-  static const _priContainer = Color(0xFF3A2E6A);
-  static const _t1 = Color(0xFFEDE8F5);
-  static const _t3 = Color(0xFF7B7585);
-
   @override
   void dispose() {
     _idController.dispose();
@@ -44,8 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: _bg,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
@@ -58,51 +51,51 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: _priContainer,
+                  color: cs.primaryContainer,
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child:
-                    const Icon(Icons.school_rounded, color: _primary, size: 30),
+                    Icon(Icons.school_rounded, color: cs.onPrimaryContainer, size: 30),
               ),
               const SizedBox(height: 28),
-              const Text(
+              Text(
                 'Connexion',
                 style: TextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.w900,
-                  color: _t1,
+                  color: cs.onSurface,
                   letterSpacing: -1,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Connectez-vous avec votre compte Gustave Eiffel',
                 style: TextStyle(
-                    fontSize: 14, color: _t3, fontWeight: FontWeight.w600),
+                    fontSize: 14, color: cs.onSurfaceVariant, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 40),
 
               // Email
-              const Text(
+              Text(
                 'IDENTIFIANTS',
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: _t3,
+                    color: cs.onSurfaceVariant,
                     letterSpacing: 1),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _idController,
                 keyboardType: TextInputType.text,
-                style: const TextStyle(color: _t1, fontWeight: FontWeight.w600),
+                style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
                   hintText: 'prenom.nom',
-                  hintStyle: const TextStyle(color: _t3),
-                  prefixIcon: const Icon(Icons.person_outline_rounded,
-                      color: _t3, size: 20),
+                  hintStyle: TextStyle(color: cs.onSurfaceVariant),
+                  prefixIcon: Icon(Icons.person_outline_rounded,
+                      color: cs.onSurfaceVariant, size: 20),
                   filled: true,
-                  fillColor: _surface,
+                  fillColor: cs.surfaceContainerHigh,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -114,36 +107,36 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 20),
 
               // Password
-              const Text(
+              Text(
                 'MOT DE PASSE',
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: _t3,
+                    color: cs.onSurfaceVariant,
                     letterSpacing: 1),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _passwordController,
                 obscureText: _obscure,
-                style: const TextStyle(color: _t1, fontWeight: FontWeight.w600),
+                style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600),
                 onSubmitted: (_) => _submit(),
                 decoration: InputDecoration(
                   hintText: '••••••••',
-                  hintStyle: const TextStyle(color: _t3),
-                  prefixIcon: const Icon(Icons.lock_outline_rounded,
-                      color: _t3, size: 20),
+                  hintStyle: TextStyle(color: cs.onSurfaceVariant),
+                  prefixIcon: Icon(Icons.lock_outline_rounded,
+                      color: cs.onSurfaceVariant, size: 20),
                   suffixIcon: IconButton(
                     icon: Icon(
                         _obscure
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: _t3,
+                        color: cs.onSurfaceVariant,
                         size: 20),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                   filled: true,
-                  fillColor: _surface,
+                  fillColor: cs.surfaceContainerHigh,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -161,8 +154,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: FilledButton(
                   onPressed: _loading ? null : _submit,
                   style: FilledButton.styleFrom(
-                    backgroundColor: _priContainer,
-                    foregroundColor: _primary,
+                    backgroundColor: cs.primaryContainer,
+                    foregroundColor: cs.onPrimaryContainer,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                     textStyle: const TextStyle(
@@ -171,11 +164,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         letterSpacing: .3),
                   ),
                   child: _loading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2.5, color: _primary),
+                              strokeWidth: 2.5, color: cs.onPrimaryContainer),
                         )
                       : const Text('Se connecter'),
                 ),
@@ -185,8 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Center(
                 child: Text(
                   'Vos identifiants sont ceux de l\'Université Gustave Eiffel',
-                  style: const TextStyle(
-                      fontSize: 12, color: _t3, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      fontSize: 12, color: cs.onSurfaceVariant, fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
                 ),
               ),

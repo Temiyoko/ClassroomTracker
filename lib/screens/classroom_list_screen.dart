@@ -3,32 +3,19 @@ import 'package:provider/provider.dart';
 import '../services/classroom_service.dart';
 import '../models/classroom.dart';
 
-// ─── Palette (shared constants) ─────────────────────────────────────────────
-const _bg = Color(0xFF0F0D13);
-const _surface = Color(0xFF1C1A22);
-const _surface2 = Color(0xFF252230);
-const _surface3 = Color(0xFF312D3C);
-const _primary = Color(0xFFC9B8FF);
-const _priCont = Color(0xFF3A2E6A);
-const _ok = Color(0xFF94D4A4);
-const _okBg = Color(0x2494D4A4);
-const _wa = Color(0xFFF2C469);
-const _waBg = Color(0x24F2C469);
-const _er = Color(0xFFF28E8A);
-const _erBg = Color(0x24F28E8A);
-const _t1 = Color(0xFFEDE8F5);
-const _t3 = Color(0xFF7B7585);
-
-Color _statusColor(Classroom r) {
-  if (r.hasCourse) return _er;
-  if (r.currentPeople == 0) return _ok;
-  return _wa;
+// ─── Helpers ────────────────────────────────────────────────────────────────
+Color _statusColor(BuildContext context, Classroom r) {
+  final cs = Theme.of(context).colorScheme;
+  if (r.hasCourse) return cs.error;
+  if (r.currentPeople == 0) return Colors.green;
+  return Colors.orange;
 }
 
-Color _statusBg(Classroom r) {
-  if (r.hasCourse) return _erBg;
-  if (r.currentPeople == 0) return _okBg;
-  return _waBg;
+Color _statusBg(BuildContext context, Classroom r) {
+  final cs = Theme.of(context).colorScheme;
+  if (r.hasCourse) return cs.errorContainer.withValues(alpha: 0.3);
+  if (r.currentPeople == 0) return Colors.green.withValues(alpha: 0.15);
+  return Colors.orange.withValues(alpha: 0.15);
 }
 
 String _statusLabel(Classroom r) {
@@ -110,13 +97,14 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: _surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
+          final cs = Theme.of(context).colorScheme;
           return Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
             child: Column(
@@ -128,7 +116,7 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                        color: _surface3,
+                        color: cs.outlineVariant,
                         borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
@@ -136,11 +124,11 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Filtres',
+                    Text('Filtres',
                         style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            color: _t1)),
+                            color: cs.onSurface)),
                     TextButton(
                       onPressed: () {
                         setModalState(() {
@@ -151,8 +139,8 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
                         });
                         setState(() {});
                       },
-                      child: const Text('Réinitialiser',
-                          style: TextStyle(color: _primary, fontSize: 13)),
+                      child: Text('Réinitialiser',
+                          style: TextStyle(color: cs.primary, fontSize: 13)),
                     ),
                   ],
                 ),
@@ -272,6 +260,7 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
   @override
   Widget build(BuildContext context) {
     final svc = context.watch<ClassroomService>();
+    final cs = Theme.of(context).colorScheme;
     final all = svc.classrooms;
     final rooms = _filter(all);
 
@@ -281,7 +270,6 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
         _type != null;
 
     return Scaffold(
-      backgroundColor: _bg,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,11 +280,11 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Salles',
+                  Text('Salles',
                       style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.w900,
-                          color: _t1,
+                          color: cs.onSurface,
                           letterSpacing: -.5)),
                   GestureDetector(
                     onTap: () => _showFilterMenu(all),
@@ -304,30 +292,30 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: hasFilters ? _priCont : _surface,
+                        color: hasFilters ? cs.primaryContainer : cs.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(16),
                         border: hasFilters
-                            ? Border.all(color: _primary.withValues(alpha: 0.3))
+                            ? Border.all(color: cs.primary.withValues(alpha: 0.3))
                             : null,
                       ),
                       child: Row(
                         children: [
                           Icon(Icons.tune_rounded,
                               size: 18,
-                              color: hasFilters ? _primary : _t3),
+                              color: hasFilters ? cs.onPrimaryContainer : cs.onSurfaceVariant),
                           const SizedBox(width: 8),
                           Text('Filtres',
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
-                                  color: hasFilters ? _primary : _t3)),
+                                  color: hasFilters ? cs.onPrimaryContainer : cs.onSurfaceVariant)),
                           if (hasFilters) ...[
                             const SizedBox(width: 6),
                             Container(
                               width: 6,
                               height: 6,
-                              decoration: const BoxDecoration(
-                                  color: _primary, shape: BoxShape.circle),
+                              decoration: BoxDecoration(
+                                  color: cs.primary, shape: BoxShape.circle),
                             ),
                           ],
                         ],
@@ -343,25 +331,25 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
                 decoration: BoxDecoration(
-                    color: _surface, borderRadius: BorderRadius.circular(16)),
+                    color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(16)),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(
                   children: [
-                    const Icon(Icons.search_rounded, color: _t3, size: 20),
+                    Icon(Icons.search_rounded, color: cs.onSurfaceVariant, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         controller: _search,
                         onChanged: (_) => setState(() {}),
-                        style: const TextStyle(
-                            color: _t1,
+                        style: TextStyle(
+                            color: cs.onSurface,
                             fontWeight: FontWeight.w600,
                             fontSize: 14),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Rechercher une salle…',
-                          hintStyle: TextStyle(color: _t3),
+                          hintStyle: TextStyle(color: cs.onSurfaceVariant),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
                           fillColor: Colors.transparent,
                           filled: false,
                         ),
@@ -370,8 +358,8 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
                     if (_search.text.isNotEmpty)
                       GestureDetector(
                         onTap: () => setState(() => _search.clear()),
-                        child: const Icon(Icons.close_rounded,
-                            color: _t3, size: 18),
+                        child: Icon(Icons.close_rounded,
+                            color: cs.onSurfaceVariant, size: 18),
                       ),
                   ],
                 ),
@@ -385,10 +373,10 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 '${rooms.length} salle${rooms.length > 1 ? 's' : ''}',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: _t3,
+                    color: cs.onSurfaceVariant,
                     letterSpacing: .6),
               ),
             ),
@@ -397,10 +385,10 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
             // ── List ───────────────────────────────────────────────────────
             Expanded(
               child: rooms.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text('Aucune salle trouvée.',
                           style: TextStyle(
-                              color: _t3, fontWeight: FontWeight.w600)),
+                              color: cs.onSurfaceVariant, fontWeight: FontWeight.w600)),
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
@@ -425,10 +413,10 @@ class _FilterLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(label.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w800,
-            color: _t3,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             letterSpacing: 1));
   }
 }
@@ -442,23 +430,24 @@ class _MenuChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? _priCont : _surface2,
+          color: active ? cs.primaryContainer : cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-              color: active ? _primary.withValues(alpha: 0.5) : Colors.transparent),
+              color: active ? cs.primary.withValues(alpha: 0.5) : Colors.transparent),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w800,
-            color: active ? _primary : _t1,
+            color: active ? cs.onPrimaryContainer : cs.onSurface,
           ),
         ),
       ),
@@ -480,10 +469,11 @@ class _MenuDrop<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: _surface2,
+        color: cs.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(14),
       ),
       child: DropdownButton<T>(
@@ -492,8 +482,8 @@ class _MenuDrop<T> extends StatelessWidget {
             .map((i) => DropdownMenuItem(
           value: i,
           child: Text(label(i),
-              style: const TextStyle(
-                  color: _t1,
+              style: TextStyle(
+                  color: cs.onSurface,
                   fontSize: 13,
                   fontWeight: FontWeight.w600)),
         ))
@@ -503,8 +493,8 @@ class _MenuDrop<T> extends StatelessWidget {
         },
         underline: const SizedBox(),
         isExpanded: true,
-        dropdownColor: _surface3,
-        icon: const Icon(Icons.expand_more_rounded, color: _t3),
+        dropdownColor: cs.surfaceContainerHighest,
+        icon: Icon(Icons.expand_more_rounded, color: cs.onSurfaceVariant),
       ),
     );
   }
@@ -518,13 +508,14 @@ class _RoomTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final col = _statusColor(room);
-    final bg = _statusBg(room);
+    final cs = Theme.of(context).colorScheme;
+    final col = _statusColor(context, room);
+    final bg = _statusBg(context, room);
     final isFav = svc.isFavorite(room.id);
 
     return Container(
       decoration: BoxDecoration(
-          color: _surface, borderRadius: BorderRadius.circular(20)),
+          color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
       padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
       child: Row(
         children: [
@@ -541,25 +532,25 @@ class _RoomTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(room.name,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w800, color: _t1)),
+                    style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w800, color: cs.onSurface)),
                 const SizedBox(height: 3),
                 Text(
                     '${room.typeLabel} · Étage ${room.floor} · Épi ${room.corridor}',
-                    style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w600, color: _t3)),
+                    style: TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
                 if (room.currentPeople > 0)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Row(
                       children: [
-                        const Icon(Icons.person_outline_rounded,
-                            size: 12, color: _t3),
+                        Icon(Icons.person_outline_rounded,
+                            size: 12, color: cs.onSurfaceVariant),
                         const SizedBox(width: 3),
                         Text('${room.currentPeople} personnes',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11,
-                                color: _t3,
+                                color: cs.onSurfaceVariant,
                                 fontWeight: FontWeight.w600)),
                       ],
                     ),
@@ -587,7 +578,7 @@ class _RoomTile extends StatelessWidget {
                 onTap: () => svc.toggleFavorite(room.id),
                 child: Icon(
                   isFav ? Icons.star_rounded : Icons.star_border_rounded,
-                  color: isFav ? _wa : _t3,
+                  color: isFav ? Colors.orange : cs.onSurfaceVariant,
                   size: 22,
                 ),
               ),

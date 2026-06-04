@@ -6,33 +6,19 @@ import '../services/classroom_service.dart';
 import '../services/notification_service.dart';
 import '../models/classroom.dart';
 
-// ─── Palette ───────────────────────────────────────────────────────────────
-const _bg = Color(0xFF0F0D13);
-const _surface = Color(0xFF1C1A22);
-const _primary = Color(0xFFC9B8FF);
-const _priCont = Color(0xFF3A2E6A);
-const _onPriCont = Color(0xFFEDE0FF);
-const _ok = Color(0xFF94D4A4);
-const _okBg = Color(0x2494D4A4);
-const _wa = Color(0xFFF2C469);
-const _waBg = Color(0x24F2C469);
-const _er = Color(0xFFF28E8A);
-const _erBg = Color(0x24F28E8A);
-const _t1 = Color(0xFFEDE8F5);
-const _t2 = Color(0xFFC4BDD1);
-const _t3 = Color(0xFF7B7585);
-
 // ─── Helpers ────────────────────────────────────────────────────────────────
-Color _statusColor(Classroom r) {
-  if (r.hasCourse) return _er;
-  if (r.currentPeople == 0) return _ok;
-  return _wa;
+Color _statusColor(BuildContext context, Classroom r) {
+  final cs = Theme.of(context).colorScheme;
+  if (r.hasCourse) return cs.error;
+  if (r.currentPeople == 0) return Colors.green; // Material 3 doesn't have a "success" in ColorScheme by default, but we can use green or secondary
+  return Colors.orange; // warning
 }
 
-Color _statusBg(Classroom r) {
-  if (r.hasCourse) return _erBg;
-  if (r.currentPeople == 0) return _okBg;
-  return _waBg;
+Color _statusBg(BuildContext context, Classroom r) {
+  final cs = Theme.of(context).colorScheme;
+  if (r.hasCourse) return cs.errorContainer.withValues(alpha: 0.3);
+  if (r.currentPeople == 0) return Colors.green.withValues(alpha: 0.15);
+  return Colors.orange.withValues(alpha: 0.15);
 }
 
 String _statusLabel(Classroom r) {
@@ -60,6 +46,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
     final svc = context.watch<ClassroomService>();
+    final cs = Theme.of(context).colorScheme;
     final all = svc.classrooms;
     final favs = svc.favorites;
 
@@ -69,7 +56,6 @@ class HomeScreen extends StatelessWidget {
     final pct = all.isEmpty ? 0 : (busy * 100 / all.length).round();
 
     return Scaffold(
-      backgroundColor: _bg,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -85,19 +71,19 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           Text(
                             'Bonjour, ${auth.userName ?? ''}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w900,
-                              color: _t1,
+                              color: cs.onSurface,
                               letterSpacing: -.5,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             auth.schoolOrg ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 13,
-                                color: _t3,
+                                color: cs.onSurfaceVariant,
                                 fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -127,13 +113,13 @@ class HomeScreen extends StatelessWidget {
               child: _SectionHeader(title: 'Favoris', actionLabel: null),
             ),
             if (favs.isEmpty)
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   child: Text(
                     'Marquez des salles ★ pour les retrouver ici.',
                     style: TextStyle(
-                        fontSize: 13, color: _t3, fontWeight: FontWeight.w600),
+                        fontSize: 13, color: cs.onSurfaceVariant, fontWeight: FontWeight.w600),
                   ),
                 ),
               )
@@ -170,10 +156,10 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
                 child: TextButton.icon(
                   onPressed: () => context.read<AuthService>().logout(),
-                  icon: const Icon(Icons.logout_rounded, size: 18, color: _t3),
-                  label: const Text('Déconnexion',
+                  icon: Icon(Icons.logout_rounded, size: 18, color: cs.onSurfaceVariant),
+                  label: Text('Déconnexion',
                       style:
-                          TextStyle(color: _t3, fontWeight: FontWeight.w700)),
+                          TextStyle(color: cs.onSurfaceVariant, fontWeight: FontWeight.w700)),
                 ),
               ),
             ),
@@ -190,11 +176,12 @@ class _NotifButton extends StatelessWidget {
 
   void _showNotificationCenter(BuildContext context) {
     final notifSvc = context.read<NotificationService>();
+    final cs = Theme.of(context).colorScheme;
     notifSvc.markAllAsRead();
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: _surface,
+      backgroundColor: cs.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
@@ -203,126 +190,129 @@ class _NotifButton extends StatelessWidget {
         minChildSize: 0.4,
         maxChildSize: 0.9,
         expand: false,
-        builder: (_, scrollController) => Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                      color: _t3, borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Notifications',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: _t1)),
-                  TextButton(
-                    onPressed: () {
-                      notifSvc.clearAll();
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Tout effacer',
-                        style: TextStyle(color: _er, fontSize: 13)),
+        builder: (context, scrollController) {
+          final cs = Theme.of(context).colorScheme;
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: cs.outlineVariant, borderRadius: BorderRadius.circular(2)),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: Consumer<NotificationService>(
-                  builder: (context, svc, _) {
-                    final notifications = svc.notifications;
-                    if (notifications.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.notifications_none_rounded,
-                                size: 48, color: _t3.withValues(alpha: 50 / 255)),
-                            const SizedBox(height: 16),
-                            const Text('Aucune notification',
-                                style: TextStyle(
-                                    color: _t3, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      );
-                    }
-                    return ListView.separated(
-                      controller: scrollController,
-                      itemCount: notifications.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) {
-                        final n = notifications[i];
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: _bg,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Notifications',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: cs.onSurface)),
+                    TextButton(
+                      onPressed: () {
+                        notifSvc.clearAll();
+                        Navigator.pop(context);
+                      },
+                      child: Text('Tout effacer',
+                          style: TextStyle(color: cs.error, fontSize: 13)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: Consumer<NotificationService>(
+                    builder: (context, svc, _) {
+                      final notifications = svc.notifications;
+                      if (notifications.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: _okBg,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(Icons.check_circle_outline,
-                                    color: _ok, size: 20),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(n.title,
-                                            style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w800,
-                                                color: _t1)),
-                                        Text(
-                                          DateFormat('HH:mm').format(n.timestamp),
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                              color: _t3),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(n.body,
-                                        style: const TextStyle(
-                                            fontSize: 13,
-                                            color: _t2,
-                                            height: 1.4)),
-                                  ],
-                                ),
-                              ),
+                              Icon(Icons.notifications_none_rounded,
+                                  size: 48, color: cs.onSurfaceVariant.withValues(alpha: 0.3)),
+                              const SizedBox(height: 16),
+                              Text('Aucune notification',
+                                  style: TextStyle(
+                                      color: cs.onSurfaceVariant, fontWeight: FontWeight.w600)),
                             ],
                           ),
                         );
-                      },
-                    );
-                  },
+                      }
+                      return ListView.separated(
+                        controller: scrollController,
+                        itemCount: notifications.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (_, i) {
+                          final n = notifications[i];
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: cs.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: cs.primaryContainer.withValues(alpha: 0.4),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(Icons.check_circle_outline,
+                                      color: cs.onPrimaryContainer, size: 20),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(n.title,
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: cs.onSurface)),
+                                          Text(
+                                            DateFormat('HH:mm').format(n.timestamp),
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: cs.onSurfaceVariant),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(n.body,
+                                          style: TextStyle(
+                                              fontSize: 13,
+                                              color: cs.onSurfaceVariant,
+                                              height: 1.4)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -330,6 +320,7 @@ class _NotifButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unread = context.select<NotificationService, int>((s) => s.unreadCount);
+    final cs = Theme.of(context).colorScheme;
 
     return GestureDetector(
       onTap: () => _showNotificationCenter(context),
@@ -340,9 +331,9 @@ class _NotifButton extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-                color: _surface, borderRadius: BorderRadius.circular(14)),
+                color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(14)),
             child:
-                const Icon(Icons.notifications_outlined, color: _t2, size: 22),
+                Icon(Icons.notifications_outlined, color: cs.onSurfaceVariant, size: 22),
           ),
           if (unread > 0)
             Positioned(
@@ -352,9 +343,9 @@ class _NotifButton extends StatelessWidget {
                 width: 18,
                 height: 18,
                 decoration: BoxDecoration(
-                  color: _er,
+                  color: cs.error,
                   shape: BoxShape.circle,
-                  border: Border.all(color: _bg, width: 2),
+                  border: Border.all(color: cs.surface, width: 2),
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -379,23 +370,24 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  color: _t3,
+                  color: cs.onSurfaceVariant,
                   letterSpacing: .8)),
           if (actionLabel != null)
             Text(actionLabel!,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: _primary)),
+                    color: cs.primary)),
         ],
       ),
     );
@@ -413,50 +405,56 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = cs.brightness == Brightness.dark;
+
+    final bg = isDark ? cs.onPrimary : cs.primary;
+    final fg = isDark ? cs.primary : cs.onPrimary;
+
     return Container(
       decoration: BoxDecoration(
-          color: _priCont, borderRadius: BorderRadius.circular(28)),
+          color: bg, borderRadius: BorderRadius.circular(28)),
       padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('OCCUPATION GLOBALE',
+          Text('OCCUPATION GLOBALE',
               style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: _primary,
+                  color: fg,
                   letterSpacing: 1)),
           const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text('$pct',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 72,
                       fontWeight: FontWeight.w900,
-                      color: _onPriCont,
+                      color: fg,
                       letterSpacing: -3,
                       height: 1)),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 10, left: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10, left: 4),
                 child: Text('%',
                     style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
-                        color: _primary)),
+                        color: fg.withValues(alpha: 0.9))),
               ),
             ],
           ),
           Text(
               '$busy salle${busy > 1 ? 's' : ''} occupée${busy > 1 ? 's' : ''} sur $total',
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: _primary)),
+              style: TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w700, color: fg)),
           const SizedBox(height: 16),
           Row(
             children: [
-              _HeroStat(value: '$free', label: 'Libres'),
+              _HeroStat(value: '$free', label: 'Libres', color: fg),
               const SizedBox(width: 10),
-              _HeroStat(value: '$withCourse', label: 'En cours'),
+              _HeroStat(value: '$withCourse', label: 'En cours', color: fg),
             ],
           ),
         ],
@@ -467,14 +465,15 @@ class _HeroCard extends StatelessWidget {
 
 class _HeroStat extends StatelessWidget {
   final String value, label;
-  const _HeroStat({required this.value, required this.label});
+  final Color color;
+  const _HeroStat({required this.value, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 20 / 255),
+          color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(14),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -482,15 +481,15 @@ class _HeroStat extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(value,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: _onPriCont)),
+                    color: color)),
             Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: _primary,
+                    fontWeight: FontWeight.w800,
+                    color: color.withValues(alpha: 0.9),
                     letterSpacing: .5)),
           ],
         ),
@@ -506,12 +505,13 @@ class _FavChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final col = _statusColor(room);
-    final bg = _statusBg(room);
+    final cs = Theme.of(context).colorScheme;
+    final col = _statusColor(context, room);
+    final bg = _statusBg(context, room);
     return Container(
       width: 130,
       decoration: BoxDecoration(
-          color: _surface, borderRadius: BorderRadius.circular(20)),
+          color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,14 +528,14 @@ class _FavChip extends StatelessWidget {
               const Spacer(),
               GestureDetector(
                 onTap: () => svc.toggleFavorite(room.id),
-                child: const Icon(Icons.star_rounded, color: _wa, size: 18),
+                child: const Icon(Icons.star_rounded, color: Colors.orange, size: 18),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text(room.name,
-              style: const TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w800, color: _t1)),
+              style: TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w800, color: cs.onSurface)),
           const SizedBox(height: 2),
           Text(_statusLabel(room),
               style: TextStyle(
@@ -553,13 +553,14 @@ class _RoomCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final col = _statusColor(room);
-    final bg = _statusBg(room);
+    final cs = Theme.of(context).colorScheme;
+    final col = _statusColor(context, room);
+    final bg = _statusBg(context, room);
     final isFav = svc.isFavorite(room.id);
 
     return Container(
       decoration: BoxDecoration(
-          color: _surface, borderRadius: BorderRadius.circular(20)),
+          color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
       padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
       child: Row(
         children: [
@@ -578,13 +579,13 @@ class _RoomCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(room.name,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w800, color: _t1)),
+                    style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w800, color: cs.onSurface)),
                 const SizedBox(height: 3),
                 Text(
                     '${room.typeLabel} · Étage ${room.floor} · Épi ${room.corridor}',
-                    style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w600, color: _t3)),
+                    style: TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
               ],
             ),
           ),
@@ -609,7 +610,7 @@ class _RoomCard extends StatelessWidget {
                 onTap: () => svc.toggleFavorite(room.id),
                 child: Icon(
                   isFav ? Icons.star_rounded : Icons.star_border_rounded,
-                  color: isFav ? _wa : _t3,
+                  color: isFav ? Colors.orange : cs.onSurfaceVariant,
                   size: 22,
                 ),
               ),
