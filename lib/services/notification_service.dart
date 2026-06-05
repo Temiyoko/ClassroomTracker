@@ -19,7 +19,7 @@ class NotificationService with ChangeNotifier {
   }
 
   Future<void> _initLocalNotifications() async {
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
     const iosInit = DarwinInitializationSettings();
     const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
     
