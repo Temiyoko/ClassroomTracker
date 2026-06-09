@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/classroom_service.dart';
 import '../models/classroom.dart';
+import '../widgets/room_detail_sheet.dart';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 Color _statusColor(BuildContext context, Classroom r) {
@@ -513,78 +514,81 @@ class _RoomTile extends StatelessWidget {
     final bg = _statusBg(context, room);
     final isFav = svc.isFavorite(room.id);
 
-    return Container(
-      decoration: BoxDecoration(
-          color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
-      padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-                color: bg, borderRadius: BorderRadius.circular(16)),
-            child: Icon(_typeIcon(room.type), color: col, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(room.name,
-                    style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w800, color: cs.onSurface)),
-                const SizedBox(height: 3),
-                Text(
-                    '${room.typeLabel} · Étage ${room.floor} · Épi ${room.corridor}',
-                    style: TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
-                if (room.currentPeople > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Row(
-                      children: [
-                        Icon(Icons.person_outline_rounded,
-                            size: 12, color: cs.onSurfaceVariant),
-                        const SizedBox(width: 3),
-                        Text('${room.currentPeople} personnes',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: cs.onSurfaceVariant,
-                                fontWeight: FontWeight.w600)),
-                      ],
+    return GestureDetector(
+      onTap: () => RoomDetailSheet.show(context, room),
+      child: Container(
+        decoration: BoxDecoration(
+            color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                  color: bg, borderRadius: BorderRadius.circular(16)),
+              child: Icon(_typeIcon(room.type), color: col, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(room.name,
+                      style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800, color: cs.onSurface)),
+                  const SizedBox(height: 3),
+                  Text(
+                      '${room.typeLabel} · Étage ${room.floor} · Épi ${room.corridor}',
+                      style: TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
+                  if (room.currentPeople > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Icon(Icons.person_outline_rounded,
+                              size: 12, color: cs.onSurfaceVariant),
+                          const SizedBox(width: 3),
+                          Text('${room.currentPeople} personnes',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: cs.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      ),
                     ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: bg, borderRadius: BorderRadius.circular(20)),
+                  child: Text(_statusLabel(room),
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: col,
+                          letterSpacing: .3)),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => svc.toggleFavorite(room.id),
+                  child: Icon(
+                    isFav ? Icons.star_rounded : Icons.star_border_rounded,
+                    color: isFav ? Colors.orange : cs.onSurfaceVariant,
+                    size: 22,
                   ),
+                ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                    color: bg, borderRadius: BorderRadius.circular(20)),
-                child: Text(_statusLabel(room),
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: col,
-                        letterSpacing: .3)),
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => svc.toggleFavorite(room.id),
-                child: Icon(
-                  isFav ? Icons.star_rounded : Icons.star_border_rounded,
-                  color: isFav ? Colors.orange : cs.onSurfaceVariant,
-                  size: 22,
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

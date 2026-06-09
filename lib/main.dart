@@ -10,6 +10,7 @@ import 'services/auth_service.dart';
 import 'services/classroom_service.dart';
 import 'services/notification_service.dart';
 import 'services/theme_service.dart';
+import 'services/timetable_service.dart';
 import 'screens/settings_screen.dart';
 
 void main() async {
@@ -34,6 +35,7 @@ class ClassroomTrackerApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => NotificationService()),
+        Provider(create: (_) => TimetableService()),
         ChangeNotifierProxyProvider<NotificationService, ClassroomService>(
           create: (_) => ClassroomService(),
           update: (_, notifSvc, classroomSvc) {

@@ -6,6 +6,7 @@ import '../services/auth_service.dart';
 import '../services/classroom_service.dart';
 import '../services/notification_service.dart';
 import '../models/classroom.dart';
+import '../widgets/room_detail_sheet.dart';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 Color _statusColor(BuildContext context, Classroom r) {
@@ -594,39 +595,42 @@ class _FavChip extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final col = _statusColor(context, room);
     final bg = _statusBg(context, room);
-    return Container(
-      width: 130,
-      decoration: BoxDecoration(
-          color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                    color: bg, borderRadius: BorderRadius.circular(12)),
-                child: Icon(_typeIcon(room.type), color: col, size: 18),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => svc.toggleFavorite(room.id),
-                child: const Icon(Icons.star_rounded, color: Colors.orange, size: 18),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(room.name,
-              style: TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w800, color: cs.onSurface)),
-          const SizedBox(height: 2),
-          Text(_statusLabel(room),
-              style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w700, color: col)),
-        ],
+    return GestureDetector(
+      onTap: () => RoomDetailSheet.show(context, room),
+      child: Container(
+        width: 130,
+        decoration: BoxDecoration(
+            color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                      color: bg, borderRadius: BorderRadius.circular(12)),
+                  child: Icon(_typeIcon(room.type), color: col, size: 18),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => svc.toggleFavorite(room.id),
+                  child: const Icon(Icons.star_rounded, color: Colors.orange, size: 18),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(room.name,
+                style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w800, color: cs.onSurface)),
+            const SizedBox(height: 2),
+            Text(_statusLabel(room),
+                style: TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w700, color: col)),
+          ],
+        ),
       ),
     );
   }
@@ -644,65 +648,68 @@ class _RoomCard extends StatelessWidget {
     final bg = _statusBg(context, room);
     final isFav = svc.isFavorite(room.id);
 
-    return Container(
-      decoration: BoxDecoration(
-          color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
-      padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
-      child: Row(
-        children: [
-          // Icon
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-                color: bg, borderRadius: BorderRadius.circular(16)),
-            child: Icon(_typeIcon(room.type), color: col, size: 22),
-          ),
-          const SizedBox(width: 14),
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () => RoomDetailSheet.show(context, room),
+      child: Container(
+        decoration: BoxDecoration(
+            color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                  color: bg, borderRadius: BorderRadius.circular(16)),
+              child: Icon(_typeIcon(room.type), color: col, size: 22),
+            ),
+            const SizedBox(width: 14),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(room.name,
+                      style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800, color: cs.onSurface)),
+                  const SizedBox(height: 3),
+                  Text(
+                      '${room.typeLabel} · Étage ${room.floor} · Épi ${room.corridor}',
+                      style: TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
+                ],
+              ),
+            ),
+            // Status badge
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(room.name,
-                    style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w800, color: cs.onSurface)),
-                const SizedBox(height: 3),
-                Text(
-                    '${room.typeLabel} · Étage ${room.floor} · Épi ${room.corridor}',
-                    style: TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: bg, borderRadius: BorderRadius.circular(20)),
+                  child: Text(_statusLabel(room),
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: col,
+                          letterSpacing: .3)),
+                ),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: () => svc.toggleFavorite(room.id),
+                  child: Icon(
+                    isFav ? Icons.star_rounded : Icons.star_border_rounded,
+                    color: isFav ? Colors.orange : cs.onSurfaceVariant,
+                    size: 22,
+                  ),
+                ),
               ],
             ),
-          ),
-          // Status badge
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                    color: bg, borderRadius: BorderRadius.circular(20)),
-                child: Text(_statusLabel(room),
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: col,
-                        letterSpacing: .3)),
-              ),
-              const SizedBox(height: 6),
-              GestureDetector(
-                onTap: () => svc.toggleFavorite(room.id),
-                child: Icon(
-                  isFav ? Icons.star_rounded : Icons.star_border_rounded,
-                  color: isFav ? Colors.orange : cs.onSurfaceVariant,
-                  size: 22,
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

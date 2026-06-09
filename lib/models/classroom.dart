@@ -8,6 +8,8 @@ class Classroom {
   final RoomType type;
   final int currentPeople;
   final bool hasCourse;
+  final String? currentCourse;
+  final String? icalResourceId;
   bool isFavorite;
 
   Classroom({
@@ -18,6 +20,8 @@ class Classroom {
     required this.type,
     this.currentPeople = 0,
     this.hasCourse = false,
+    this.currentCourse,
+    this.icalResourceId,
     this.isFavorite = false,
   });
 
@@ -41,6 +45,8 @@ class Classroom {
       type: _parseRoomType(data['type']),
       currentPeople: (data['currentPeople'] as num?)?.toInt() ?? 0,
       hasCourse: data['hasCourse'] ?? false,
+      currentCourse: data['currentCourse'] as String?,
+      icalResourceId: data['icalResourceId'] as String?,
     );
   }
 
