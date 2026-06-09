@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../models/classroom.dart';
 import '../models/course_detail.dart';
 import '../services/classroom_service.dart';
@@ -291,6 +292,58 @@ class _RoomDetailSheetState extends State<RoomDetailSheet> {
                   ),
                 );
               },
+            ),
+          ],
+          if (!widget.room.hasCourse && widget.room.nextCourseStart != null) ...[
+            const SizedBox(height: 24),
+            Text(
+              'PROCHAINE OCCUPATION',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: cs.onSurfaceVariant,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: cs.primaryContainer.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.event_available_rounded, color: cs.primary, size: 24),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Libre jusqu\'à ${DateFormat('HH:mm').format(widget.room.nextCourseStart!)}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: cs.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Un cours commencera à cette heure là.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ],

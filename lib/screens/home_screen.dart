@@ -52,6 +52,15 @@ class HomeScreen extends StatelessWidget {
     final all = svc.classrooms;
     final favs = svc.favorites;
 
+    final enCeMoment = all.where((r) => r.currentPeople == 0 && !r.hasCourse).toList()
+      ..sort((a, b) {
+        if (a.nextCourseStart == null && b.nextCourseStart == null) return 0;
+        if (a.nextCourseStart == null) return -1;
+        if (b.nextCourseStart == null) return 1;
+        return b.nextCourseStart!.compareTo(a.nextCourseStart!);
+      });
+    final displayList = enCeMoment.take(10).toList();
+
     final free = all.where((r) => r.currentPeople == 0 && !r.hasCourse).length;
     final busy = all.where((r) => r.currentPeople > 0 || r.hasCourse).length;
     final withCourse = all.where((r) => r.hasCourse).length;
@@ -145,10 +154,10 @@ class HomeScreen extends StatelessWidget {
             ),
             SliverList.separated(
               separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemCount: all.take(5).length,
+              itemCount: displayList.length,
               itemBuilder: (_, i) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _RoomCard(room: all[i], svc: svc),
+                child: _RoomCard(room: displayList[i], svc: svc),
               ),
             ),
 
@@ -647,6 +656,12 @@ class _RoomCard extends StatelessWidget {
     final col = _statusColor(context, room);
     final bg = _statusBg(context, room);
     final isFav = svc.isFavorite(room.id);
+    final isFree = room.currentPeople == 0 && !room.hasCourse;
+    final subtitle = isFree
+        ? (room.nextCourseStart != null
+            ? 'Libre jusqu\'à ${DateFormat('HH:mm').format(room.nextCourseStart!)}'
+            : 'Libre pour la journée')
+        : room.typeLabel;
 
     return GestureDetector(
       onTap: () => RoomDetailSheet.show(context, room),
@@ -675,7 +690,7 @@ class _RoomCard extends StatelessWidget {
                           fontSize: 15, fontWeight: FontWeight.w800, color: cs.onSurface)),
                   const SizedBox(height: 3),
                   Text(
-                      '${room.typeLabel} · Étage ${room.floor} · Épi ${room.corridor}',
+                      '$subtitle · Étage ${room.floor} · Épi ${room.corridor}',
                       style: TextStyle(
                           fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
                 ],

@@ -60,15 +60,11 @@ function buildIcalUrl(resourceId) {
 // ── iCal parsing ─────────────────────────────────────────────────────────────
 
 /**
- * Returns true if any VEVENT is happening right now.
- * We run every 15 minutes so we cover all class boundaries (:00, :15, :30).
- * Checking the current moment (not a future look-ahead) is more accurate:
- * classes last at least 30–60 min, so even if the GitHub Actions runner fires
- * 10–15 min late, the result is still correct.
+ * Returns status info: if any VEVENT is happening now, and when the next one starts.
  * @param {string} url
- * @returns {Promise<boolean>}
+ * @returns {Promise<{hasCourse: boolean, nextCourseStart: string|null}>}
  */
-async function hasCourseNow(url) {
+async function getRoomStatus(url) {
   let events;
   try {
     events = await ical.async.fromURL(url);
@@ -77,6 +73,8 @@ async function hasCourseNow(url) {
   }
 
   const now = new Date();
+  let hasCourse = false;
+  let nextCourseStart = null;
 
   for (const key of Object.keys(events)) {
     const ev = events[key];
@@ -86,27 +84,40 @@ async function hasCourseNow(url) {
     const end = ev.end instanceof Date ? ev.end : new Date(ev.end);
 
     if (start <= now && now < end) {
-      return true;
+      hasCourse = true;
+    } else if (start > now) {
+      // Find the earliest event in the future
+      if (!nextCourseStart || start < nextCourseStart) {
+        nextCourseStart = start;
+      }
     }
   }
 
-  return false;
+  return {
+    hasCourse,
+    nextCourseStart: nextCourseStart ? nextCourseStart.toISOString() : null,
+  };
 }
 
 // ── Sync one room ─────────────────────────────────────────────────────────────
 
 async function syncRoom(docId, resourceId) {
   const url = buildIcalUrl(resourceId);
-  let hasCourse;
+  let status;
   try {
-    hasCourse = await hasCourseNow(url);
+    status = await getRoomStatus(url);
   } catch (err) {
     console.warn(`  ⚠️  ${docId}: ${err.message} — skipping`);
     return;
   }
 
-  await db.collection("classroom").doc(docId).update({ hasCourse });
-  console.log(`  ✓ ${docId}: hasCourse = ${hasCourse}`);
+  await db.collection("classroom").doc(docId).update({
+    hasCourse: status.hasCourse,
+    nextCourseStart: status.nextCourseStart,
+  });
+  console.log(
+    `  ✓ ${docId}: hasCourse=${status.hasCourse}, nextStart=${status.nextCourseStart}`
+  );
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────

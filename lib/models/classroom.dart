@@ -10,6 +10,7 @@ class Classroom {
   final bool hasCourse;
   final String? currentCourse;
   final String? icalResourceId;
+  final DateTime? nextCourseStart;
   bool isFavorite;
 
   Classroom({
@@ -22,6 +23,7 @@ class Classroom {
     this.hasCourse = false,
     this.currentCourse,
     this.icalResourceId,
+    this.nextCourseStart,
     this.isFavorite = false,
   });
 
@@ -47,6 +49,11 @@ class Classroom {
       hasCourse: data['hasCourse'] ?? false,
       currentCourse: data['currentCourse'] as String?,
       icalResourceId: data['icalResourceId'] as String?,
+      nextCourseStart: data['nextCourseStart'] != null
+          ? (data['nextCourseStart'] is String
+              ? DateTime.parse(data['nextCourseStart'] as String).toLocal()
+              : (data['nextCourseStart'] as dynamic).toDate())
+          : null,
     );
   }
 
