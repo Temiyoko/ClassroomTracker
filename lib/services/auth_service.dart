@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 /// Will be replaced by school SSO later.
 class AuthService with ChangeNotifier {
   bool _isAuthenticated = true; // App starts logged in
-  String? _userName = "Etudiant";
+  String? _userName;
   String? _schoolOrg = "ESIEE Paris";
 
   bool get isAuthenticated => _isAuthenticated;
@@ -16,13 +16,13 @@ class AuthService with ChangeNotifier {
     final trimmed = identifier.trim();
     
     if (trimmed.isEmpty) {
-      _userName = "Etudiant";
+      _userName = null;
     } else {
       // Extract the name part (before the first dot)
       final namePart = trimmed.contains('.') ? trimmed.split('.').first : trimmed;
       _userName = namePart.isNotEmpty
           ? namePart[0].toUpperCase() + namePart.substring(1).toLowerCase()
-          : "Etudiant";
+          : null;
     }
     
     _schoolOrg = "ESIEE Paris";
