@@ -294,7 +294,7 @@ class _RoomDetailSheetState extends State<RoomDetailSheet> {
               },
             ),
           ],
-          if (!widget.room.hasCourse && widget.room.nextCourseStart != null) ...[
+          if (!widget.room.hasCourse) ...[
             const SizedBox(height: 24),
             Text(
               'PROCHAINE OCCUPATION',
@@ -310,20 +310,32 @@ class _RoomDetailSheetState extends State<RoomDetailSheet> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: cs.primaryContainer.withValues(alpha: 0.1),
+                color: widget.room.nextCourseStart != null
+                    ? cs.primaryContainer.withValues(alpha: 0.1)
+                    : cs.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
+                border: Border.all(
+                    color: widget.room.nextCourseStart != null
+                        ? cs.primary.withValues(alpha: 0.05)
+                        : Colors.transparent),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.event_available_rounded, color: cs.primary, size: 24),
+                  Icon(
+                      widget.room.nextCourseStart != null
+                          ? Icons.event_available_rounded
+                          : Icons.check_circle_outline_rounded,
+                      color: widget.room.nextCourseStart != null
+                          ? cs.primary
+                          : Colors.green,
+                      size: 24),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Libre jusqu\'à ${DateFormat('HH:mm').format(widget.room.nextCourseStart!)}',
+                          _getNextCourseText(widget.room),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -332,7 +344,9 @@ class _RoomDetailSheetState extends State<RoomDetailSheet> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Un cours commencera à cette heure là.',
+                          widget.room.nextCourseStart != null
+                              ? 'Un cours commencera à cette heure là.'
+                              : 'Profitez de cette salle librement.',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -349,6 +363,21 @@ class _RoomDetailSheetState extends State<RoomDetailSheet> {
         ],
       ),
     );
+  }
+
+  String _getNextCourseText(Classroom room) {
+    if (room.nextCourseStart == null) return 'Aucun cours prochainement';
+
+    final now = DateTime.now();
+    final isToday = room.nextCourseStart!.day == now.day &&
+        room.nextCourseStart!.month == now.month &&
+        room.nextCourseStart!.year == now.year;
+
+    if (isToday) {
+      return 'Libre jusqu\'à ${DateFormat('HH:mm').format(room.nextCourseStart!)}';
+    } else {
+      return 'Demain à ${DateFormat('HH:mm').format(room.nextCourseStart!)}';
+    }
   }
 }
 

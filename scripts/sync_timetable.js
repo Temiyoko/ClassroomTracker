@@ -73,6 +73,9 @@ async function getRoomStatus(url) {
   }
 
   const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayAfterTomorrow = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000); // Start of day after tomorrow
+
   let hasCourse = false;
   let nextCourseStart = null;
 
@@ -85,8 +88,8 @@ async function getRoomStatus(url) {
 
     if (start <= now && now < end) {
       hasCourse = true;
-    } else if (start > now) {
-      // Find the earliest event in the future
+    } else if (start > now && start < dayAfterTomorrow) {
+      // Only consider events for today and tomorrow
       if (!nextCourseStart || start < nextCourseStart) {
         nextCourseStart = start;
       }

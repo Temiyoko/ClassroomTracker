@@ -657,11 +657,26 @@ class _RoomCard extends StatelessWidget {
     final bg = _statusBg(context, room);
     final isFav = svc.isFavorite(room.id);
     final isFree = room.currentPeople == 0 && !room.hasCourse;
-    final subtitle = isFree
-        ? (room.nextCourseStart != null
-            ? 'Libre jusqu\'à ${DateFormat('HH:mm').format(room.nextCourseStart!)}'
-            : 'Libre pour la journée')
-        : room.typeLabel;
+
+    String subtitle = room.typeLabel;
+    if (isFree) {
+      if (room.nextCourseStart != null) {
+        final now = DateTime.now();
+        final isToday = room.nextCourseStart!.day == now.day &&
+            room.nextCourseStart!.month == now.month &&
+            room.nextCourseStart!.year == now.year;
+
+        if (isToday) {
+          subtitle =
+              'Libre jusqu\'à ${DateFormat('HH:mm').format(room.nextCourseStart!)}';
+        } else {
+          subtitle =
+              'Demain à ${DateFormat('HH:mm').format(room.nextCourseStart!)}';
+        }
+      } else {
+        subtitle = 'Aucun cours prochainement';
+      }
+    }
 
     return GestureDetector(
       onTap: () => RoomDetailSheet.show(context, room),
