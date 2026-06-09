@@ -52,7 +52,7 @@ class Classroom {
       nextCourseStart: data['nextCourseStart'] != null
           ? (data['nextCourseStart'] is String
               ? DateTime.parse(data['nextCourseStart'] as String).toLocal()
-              : (data['nextCourseStart'] as dynamic).toDate())
+              : (data['nextCourseStart'] as dynamic).toDate().toLocal())
           : null,
     );
   }

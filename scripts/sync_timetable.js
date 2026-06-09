@@ -98,7 +98,7 @@ async function getRoomStatus(url) {
 
   return {
     hasCourse,
-    nextCourseStart: nextCourseStart ? nextCourseStart.toISOString() : null,
+    nextCourseStart: nextCourseStart || null,
   };
 }
 
@@ -116,10 +116,12 @@ async function syncRoom(docId, resourceId) {
 
   await db.collection("classroom").doc(docId).update({
     hasCourse: status.hasCourse,
-    nextCourseStart: status.nextCourseStart,
+    nextCourseStart: status.nextCourseStart
+      ? admin.firestore.Timestamp.fromDate(status.nextCourseStart)
+      : null,
   });
   console.log(
-    `  ✓ ${docId}: hasCourse=${status.hasCourse}, nextStart=${status.nextCourseStart}`
+    `  ✓ ${docId}: hasCourse=${status.hasCourse}, nextStart=${status.nextCourseStart ? status.nextCourseStart.toISOString() : 'null'}`
   );
 }
 
