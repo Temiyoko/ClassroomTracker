@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:icalendar_parser/icalendar_parser.dart';
 import '../models/course_detail.dart';
@@ -50,7 +51,9 @@ class TimetableService {
         }
       }
     } catch (e) {
-      print("Error fetching/parsing iCal: $e");
+      if (kDebugMode) {
+        print("Error fetching/parsing iCal: $e");
+      }
     }
     return null;
   }

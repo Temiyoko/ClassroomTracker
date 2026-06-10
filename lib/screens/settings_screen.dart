@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/theme_service.dart';
+import '../services/update_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -8,6 +9,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeSvc = context.watch<ThemeService>();
+    final updateSvc = context.watch<UpdateService>();
     final cs = Theme.of(context).colorScheme;
 
     final presets = [
@@ -177,9 +179,93 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
               ),
+
+              const SizedBox(height: 32),
+
+              // ── Update Section ──
+              _SectionTitle(title: 'Application'),
+              const SizedBox(height: 16),
+              _SettingsCard(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: Icon(Icons.info_outline_rounded, color: cs.primary),
+                      title: const Text('Version', style: TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: Text(updateSvc.currentVersion),
+                      trailing: updateSvc.isChecking
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : IconButton(
+                              icon: const Icon(Icons.refresh_rounded),
+                              onPressed: () async {
+                                final hasUpdate = await updateSvc.checkForUpdate();
+                                if (!context.mounted) return;
+                                if (hasUpdate) {
+                                  _showUpdateDialog(context, updateSvc);
+                                } else if (updateSvc.error != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(updateSvc.error!)),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('L\'application est à jour.')),
+                                  );
+                                }
+                              },
+                            ),
+                    ),
+                    if (updateSvc.isDownloading)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Téléchargement de la mise à jour...',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 8),
+                            LinearProgressIndicator(
+                              value: updateSvc.downloadProgress / 100,
+                              backgroundColor: cs.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showUpdateDialog(BuildContext context, UpdateService updateSvc) {
+    final release = updateSvc.latestRelease!;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Nouvelle version disponible : ${release.tagName}'),
+        content: SingleChildScrollView(
+          child: Text(release.body.isEmpty ? 'Aucune note de version.' : release.body),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Plus tard'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              updateSvc.downloadAndInstall();
+            },
+            child: const Text('Mettre à jour'),
+          ),
+        ],
       ),
     );
   }
@@ -205,8 +291,7 @@ class _SectionTitle extends StatelessWidget {
 
 class _SettingsCard extends StatelessWidget {
   final Widget child;
-  final bool clip;
-  const _SettingsCard({required this.child, this.clip = true});
+  const _SettingsCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -215,12 +300,10 @@ class _SettingsCard extends StatelessWidget {
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: clip
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: child,
-            )
-          : child,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: child,
+      ),
     );
   }
 }

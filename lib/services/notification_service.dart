@@ -24,7 +24,7 @@ class NotificationService with ChangeNotifier {
     const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
     
     await _localNotifications.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: (details) {
         // Handle notification click if needed
       },
@@ -50,10 +50,10 @@ class NotificationService with ChangeNotifier {
     const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
 
     await _localNotifications.show(
-      DateTime.now().hashCode,
-      title,
-      body,
-      details,
+      id: DateTime.now().hashCode,
+      title: title,
+      body: body,
+      notificationDetails: details,
     );
   }
 
