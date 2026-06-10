@@ -56,14 +56,14 @@ class TimetableService {
   }
 
   String _extractProfessor(String? description) {
-    if (description == null || description.isEmpty) return 'Enseignant inconnu';
+    if (description == null || description.isEmpty) {
+      return 'Enseignant non spécifié';
+    }
 
     // Split by newlines or literal \n strings (common in iCal)
     final rawLines = description.split(RegExp(r'\n|\\n'));
     final lines =
         rawLines.map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
-
-    String? exportInfo;
 
     // Pattern 1: Look for explicit labels
     for (var line in lines) {
@@ -72,10 +72,8 @@ class TimetableService {
         final name = line.split(':').last.trim();
         if (name.isNotEmpty) return name;
       }
-      // Keep track of export info for fallback
-      if (line.toLowerCase().contains('(modifié le') ||
-          line.toLowerCase().contains('(exporté le')) {
-        exportInfo = line.replaceAll(RegExp(r'[()]'), '').trim();
+      if (line.trim().toUpperCase() == 'PERS') {
+        return 'PERS';
       }
     }
 
@@ -87,7 +85,10 @@ class TimetableService {
       if (l.contains('groupes :') ||
           l.contains('salles :') ||
           l.contains('matière :') ||
-          l.contains('enseignant')) {
+          l.contains('enseignant') ||
+          l.contains('(modifié le') ||
+          l.contains('(exporté le') ||
+          l.startsWith('ue ')) {
         continue;
       }
 
@@ -96,7 +97,7 @@ class TimetableService {
       }
     }
 
-    // Fallback: If no prof found, use export info or default
-    return exportInfo ?? 'Enseignant inconnu';
+    // Strict requirement: If no actual prof found, don't show export info or groups
+    return 'Enseignant non spécifié';
   }
 }
