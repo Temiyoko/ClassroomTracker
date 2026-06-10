@@ -87,10 +87,11 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(
-                      height: 80,
+                      height: 100,
                       child: ListView.separated(
+                        clipBehavior: Clip.hardEdge, // Back to standard clipping
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         itemCount: presets.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 12),
                         itemBuilder: (context, i) {
@@ -102,23 +103,34 @@ class SettingsScreen extends StatelessWidget {
                             onTap: () => themeSvc.setSeedColor(color),
                             child: Column(
                               children: [
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: isSelected
-                                        ? Border.all(color: cs.onSurface, width: 3)
-                                        : null,
-                                    boxShadow: isSelected
-                                        ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 10, spreadRadius: 2)]
+                                Container(
+                                  padding: const EdgeInsets.all(8), // Padding inside the gesture area for the glow
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      shape: BoxShape.circle,
+                                      border: isSelected
+                                          ? Border.all(color: cs.onSurface, width: 3)
+                                          : null,
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                  color: color.withValues(alpha: 0.4),
+                                                  blurRadius: 10,
+                                                  spreadRadius: 2)
+                                            ]
+                                          : null,
+                                    ),
+                                    child: isSelected
+                                        ? Icon(Icons.check,
+                                            color: color.computeLuminance() > 0.5
+                                                ? Colors.black
+                                                : Colors.white)
                                         : null,
                                   ),
-                                  child: isSelected
-                                      ? Icon(Icons.check, color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white)
-                                      : null,
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
@@ -193,7 +205,8 @@ class _SectionTitle extends StatelessWidget {
 
 class _SettingsCard extends StatelessWidget {
   final Widget child;
-  const _SettingsCard({required this.child});
+  final bool clip;
+  const _SettingsCard({required this.child, this.clip = true});
 
   @override
   Widget build(BuildContext context) {
@@ -202,10 +215,12 @@ class _SettingsCard extends StatelessWidget {
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: child,
-      ),
+      child: clip
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: child,
+            )
+          : child,
     );
   }
 }
