@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
@@ -72,9 +73,9 @@ class UpdateService extends ChangeNotifier {
         _latestRelease = ReleaseInfo.fromJson(data);
         
         final packageInfo = await PackageInfo.fromPlatform();
-        final currentVersion = packageInfo.version;
+        final fullCurrentVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
         
-        final hasUpdate = _isNewerVersion(currentVersion, _latestRelease!.tagName);
+        final hasUpdate = _isNewerVersion(fullCurrentVersion, _latestRelease!.tagName);
         _isChecking = false;
         notifyListeners();
         return hasUpdate;
@@ -94,7 +95,6 @@ class UpdateService extends ChangeNotifier {
     // Clean tag name (remove 'v' prefix if present)
     final cleanLatest = latest.startsWith('v') ? latest.substring(1) : latest;
     
-    // Split by '+' for build number if present
     final latestParts = cleanLatest.split('+');
     final currentParts = current.split('+');
     
@@ -102,24 +102,21 @@ class UpdateService extends ChangeNotifier {
     final currentVersion = currentParts[0];
 
     // Simple semantic version comparison
-    final v1 = latestVersion.split('.').map(int.parse).toList();
-    final v2 = currentVersion.split('.').map(int.parse).toList();
+    final v1 = latestVersion.split('.').map((s) => int.tryParse(s) ?? 0).toList();
+    final v2 = currentVersion.split('.').map((s) => int.tryParse(s) ?? 0).toList();
 
-    for (var i = 0; i < v1.length && i < v2.length; i++) {
-      if (v1[i] > v2[i]) return true;
-      if (v1[i] < v2[i]) return false;
+    for (var i = 0; i < math.max(v1.length, v2.length); i++) {
+      final part1 = i < v1.length ? v1[i] : 0;
+      final part2 = i < v2.length ? v2[i] : 0;
+      if (part1 > part2) return true;
+      if (part1 < part2) return false;
     }
     
-    if (v1.length > v2.length) return true;
-
-    // If versions are equal, compare build numbers if both exist
-    if (latestParts.length > 1 && currentParts.length > 1) {
-      final b1 = int.tryParse(latestParts[1]) ?? 0;
-      final b2 = int.tryParse(currentParts[1]) ?? 0;
-      return b1 > b2;
-    }
-
-    return false;
+    // If versions are equal, compare build numbers
+    final b1 = latestParts.length > 1 ? (int.tryParse(latestParts[1]) ?? 0) : 0;
+    final b2 = currentParts.length > 1 ? (int.tryParse(currentParts[1]) ?? 0) : 0;
+    
+    return b1 > b2;
   }
 
   void downloadAndInstall() {
