@@ -100,6 +100,11 @@ class TimetableService {
       }
     }
 
+    // Pattern 3: Check for EXAMEN keyword
+    if (description.toUpperCase().contains('EXAMEN')) {
+      return 'EXAMEN';
+    }
+
     // Strict requirement: If no actual prof found, don't show export info or groups
     return 'Enseignant non spécifié';
   }
