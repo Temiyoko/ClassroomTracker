@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
-import '../services/auth_service.dart';
 import '../services/classroom_service.dart';
 import '../services/notification_service.dart';
 import '../models/classroom.dart';
@@ -46,7 +45,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthService>();
     final svc = context.watch<ClassroomService>();
     final cs = Theme.of(context).colorScheme;
     final all = svc.classrooms;
@@ -81,9 +79,7 @@ class HomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            auth.userName != null && auth.userName!.isNotEmpty
-                                ? 'Bonjour, ${auth.userName}'
-                                : 'Bonjour',
+                            'Bonjour',
                             style: TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w900,
@@ -93,7 +89,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            auth.schoolOrg ?? '',
+                            'ESIEE Paris',
                             style: TextStyle(
                                 fontSize: 13,
                                 color: cs.onSurfaceVariant,
@@ -154,25 +150,14 @@ class HomeScreen extends StatelessWidget {
             const SliverToBoxAdapter(
               child: _SectionHeader(title: 'En ce moment', actionLabel: null),
             ),
-            SliverList.separated(
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemCount: displayList.length,
-              itemBuilder: (_, i) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _RoomCard(room: displayList[i], svc: svc),
-              ),
-            ),
-
-            // ── Logout ─────────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
-                child: TextButton.icon(
-                  onPressed: () => context.read<AuthService>().logout(),
-                  icon: Icon(Icons.logout_rounded, size: 18, color: cs.onSurfaceVariant),
-                  label: Text('Déconnexion',
-                      style:
-                          TextStyle(color: cs.onSurfaceVariant, fontWeight: FontWeight.w700)),
+            SliverPadding(
+              padding: const EdgeInsets.only(bottom: 24),
+              sliver: SliverList.separated(
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemCount: displayList.length,
+                itemBuilder: (_, i) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _RoomCard(room: displayList[i], svc: svc),
                 ),
               ),
             ),

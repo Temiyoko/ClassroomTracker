@@ -5,8 +5,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'screens/classroom_list_screen.dart';
-import 'screens/login_screen.dart';
-import 'services/auth_service.dart';
 import 'services/classroom_service.dart';
 import 'services/notification_service.dart';
 import 'services/theme_service.dart';
@@ -34,7 +32,6 @@ class ClassroomTrackerApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeService()),
-        ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => NotificationService()),
         ChangeNotifierProvider(create: (_) => UpdateService()),
         Provider(create: (_) => TimetableService()),
@@ -68,24 +65,11 @@ class ClassroomTrackerApp extends StatelessWidget {
               ),
               fontFamily: 'Nunito',
             ),
-            home: const AuthWrapper(),
+            home: const MainShell(),
           );
         },
       ),
     );
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthService>();
-    if (auth.isAuthenticated) {
-      return const MainShell();
-    }
-    return const LoginScreen();
   }
 }
 
