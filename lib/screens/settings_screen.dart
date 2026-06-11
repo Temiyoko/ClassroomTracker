@@ -164,14 +164,14 @@ class SettingsScreen extends StatelessWidget {
                         children: [
                           _PalettePreview(
                             label: 'Primaire',
-                            bg: cs.primary,
-                            fg: cs.onPrimary,
+                            bg: themeSvc.themeMode == ThemeMode.dark ? cs.onPrimary : cs.primary,
+                            fg: themeSvc.themeMode == ThemeMode.dark ? cs.primary : cs.onPrimary,
                           ),
                           const SizedBox(width: 8),
                           _PalettePreview(
                             label: 'Secondaire',
-                            bg: cs.secondary,
-                            fg: cs.onSecondary,
+                            bg: themeSvc.themeMode == ThemeMode.dark ? cs.onSecondary : cs.secondary,
+                            fg: themeSvc.themeMode == ThemeMode.dark ? cs.secondary : cs.onSecondary,
                           ),
                         ],
                       ),
