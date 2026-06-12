@@ -238,7 +238,7 @@ class _ClassroomListScreenState extends State<ClassroomListScreen> {
                           _MenuDrop<int?>(
                             value: _corridor,
                             items: [null, ...corridors],
-                            label: (v) => v == null ? 'Tous' : 'Épi $v',
+                            label: (v) => v == null ? 'Tous' : (v == 0 ? 'Rue' : 'Épi $v'),
                             onChanged: (v) {
                               setModalState(() => _corridor = v);
                               setState(() {});
@@ -539,7 +539,7 @@ class _RoomTile extends StatelessWidget {
                           fontSize: 15, fontWeight: FontWeight.w800, color: cs.onSurface)),
                   const SizedBox(height: 3),
                   Text(
-                      '${room.typeLabel} · Étage ${room.floor} · Épi ${room.corridor}',
+                      '${room.typeLabel} · Étage ${room.floor} · ${room.corridor == 0 ? 'Rue' : 'Épi ${room.corridor}'}',
                       style: TextStyle(
                           fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
                   if (room.currentPeople > 0)

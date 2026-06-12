@@ -201,8 +201,8 @@ class _RoomDetailSheetState extends State<RoomDetailSheet> {
               const SizedBox(width: 12),
               _InfoCard(
                 icon: Icons.map_rounded,
-                label: 'Épi',
-                value: widget.room.corridor.toString(),
+                label: widget.room.corridor == 0 ? 'Rue' : 'Épi',
+                value: widget.room.corridor == 0 ? '' : widget.room.corridor.toString(),
               ),
             ],
           ),

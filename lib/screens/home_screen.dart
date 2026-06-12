@@ -11,7 +11,10 @@ import '../widgets/room_detail_sheet.dart';
 Color _statusColor(BuildContext context, Classroom r) {
   final cs = Theme.of(context).colorScheme;
   if (r.hasCourse) return cs.error;
-  if (r.currentPeople == 0) return Colors.green; // Material 3 doesn't have a "success" in ColorScheme by default, but we can use green or secondary
+  if (r.currentPeople == 0) {
+    return Colors
+        .green; // Material 3 doesn't have a "success" in ColorScheme by default, but we can use green or secondary
+  }
   return Colors.orange; // warning
 }
 
@@ -50,14 +53,14 @@ class HomeScreen extends StatelessWidget {
     final all = svc.classrooms;
     final favs = svc.favorites;
 
-    final enCeMoment = all.where((r) => r.currentPeople == 0 && !r.hasCourse).toList()
-      ..sort((a, b) {
-        if (a.nextCourseStart == null && b.nextCourseStart == null) return 0;
-        if (a.nextCourseStart == null) return -1;
-        if (b.nextCourseStart == null) return 1;
-        return b.nextCourseStart!.compareTo(a.nextCourseStart!);
-      });
-    final displayList = enCeMoment.take(10).toList();
+    // Group by corridor → floor
+    final Map<int, Map<int, List<Classroom>>> byCorridorFloor = {};
+    for (final r in all) {
+      byCorridorFloor.putIfAbsent(r.corridor, () => {});
+      byCorridorFloor[r.corridor]!.putIfAbsent(r.floor, () => []);
+      byCorridorFloor[r.corridor]![r.floor]!.add(r);
+    }
+    final sortedCorridors = byCorridorFloor.keys.toList()..sort();
 
     final free = all.where((r) => r.currentPeople == 0 && !r.hasCourse).length;
     final busy = all.where((r) => r.currentPeople > 0 || r.hasCourse).length;
@@ -124,11 +127,14 @@ class HomeScreen extends StatelessWidget {
             if (favs.isEmpty)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   child: Text(
                     'Marquez des salles ★ pour les retrouver ici.',
                     style: TextStyle(
-                        fontSize: 13, color: cs.onSurfaceVariant, fontWeight: FontWeight.w600),
+                        fontSize: 13,
+                        color: cs.onSurfaceVariant,
+                        fontWeight: FontWeight.w600),
                   ),
                 ),
               )
@@ -146,19 +152,20 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-            // ── Section: Actives ───────────────────────────────────────────
+            // ── Section: Par couloir ──────────────────────────────────────
             const SliverToBoxAdapter(
-              child: _SectionHeader(title: 'En ce moment', actionLabel: null),
+              child: _SectionHeader(title: 'Par couloir', actionLabel: null),
             ),
             SliverPadding(
-              padding: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               sliver: SliverList.separated(
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemCount: displayList.length,
-                itemBuilder: (_, i) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _RoomCard(room: displayList[i], svc: svc),
-                ),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemCount: sortedCorridors.length,
+                itemBuilder: (_, i) {
+                  final corridor = sortedCorridors[i];
+                  final floorMap = byCorridorFloor[corridor]!;
+                  return _CorridorCard(corridor: corridor, floorMap: floorMap);
+                },
               ),
             ),
           ],
@@ -200,7 +207,8 @@ class _NotifButton extends StatelessWidget {
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                        color: cs.outlineVariant, borderRadius: BorderRadius.circular(2)),
+                        color: cs.outlineVariant,
+                        borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -233,11 +241,14 @@ class _NotifButton extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.notifications_none_rounded,
-                                  size: 48, color: cs.onSurfaceVariant.withValues(alpha: 0.3)),
+                                  size: 48,
+                                  color: cs.onSurfaceVariant
+                                      .withValues(alpha: 0.3)),
                               const SizedBox(height: 16),
                               Text('Aucune notification',
                                   style: TextStyle(
-                                      color: cs.onSurfaceVariant, fontWeight: FontWeight.w600)),
+                                      color: cs.onSurfaceVariant,
+                                      fontWeight: FontWeight.w600)),
                             ],
                           ),
                         );
@@ -261,7 +272,8 @@ class _NotifButton extends StatelessWidget {
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: cs.primaryContainer.withValues(alpha: 0.4),
+                                    color: cs.primaryContainer
+                                        .withValues(alpha: 0.4),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Icon(Icons.check_circle_outline,
@@ -270,7 +282,8 @@ class _NotifButton extends StatelessWidget {
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         mainAxisAlignment:
@@ -282,7 +295,8 @@ class _NotifButton extends StatelessWidget {
                                                   fontWeight: FontWeight.w800,
                                                   color: cs.onSurface)),
                                           Text(
-                                            DateFormat('HH:mm').format(n.timestamp),
+                                            DateFormat('HH:mm')
+                                                .format(n.timestamp),
                                             style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w600,
@@ -317,7 +331,8 @@ class _NotifButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unread = context.select<NotificationService, int>((s) => s.unreadCount);
+    final unread =
+        context.select<NotificationService, int>((s) => s.unreadCount);
     final cs = Theme.of(context).colorScheme;
 
     return GestureDetector(
@@ -329,9 +344,10 @@ class _NotifButton extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-                color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(14)),
-            child:
-                Icon(Icons.notifications_outlined, color: cs.onSurfaceVariant, size: 22),
+                color: cs.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(14)),
+            child: Icon(Icons.notifications_outlined,
+                color: cs.onSurfaceVariant, size: 22),
           ),
           if (unread > 0)
             Positioned(
@@ -391,6 +407,7 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
+
 class _HeroCard extends StatefulWidget {
   final int pct, free, busy, total, withCourse;
   const _HeroCard(
@@ -404,7 +421,8 @@ class _HeroCard extends StatefulWidget {
   State<_HeroCard> createState() => _HeroCardState();
 }
 
-class _HeroCardState extends State<_HeroCard> with SingleTickerProviderStateMixin {
+class _HeroCardState extends State<_HeroCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -432,8 +450,8 @@ class _HeroCardState extends State<_HeroCard> with SingleTickerProviderStateMixi
     final waveColor = fg.withValues(alpha: 0.05);
 
     return Container(
-      decoration: BoxDecoration(
-          color: bg, borderRadius: BorderRadius.circular(28)),
+      decoration:
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(28)),
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
@@ -492,9 +510,13 @@ class _HeroCardState extends State<_HeroCard> with SingleTickerProviderStateMixi
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    _HeroStat(value: '${widget.free}', label: 'Libres', color: fg),
+                    _HeroStat(
+                        value: '${widget.free}', label: 'Libres', color: fg),
                     const SizedBox(width: 10),
-                    _HeroStat(value: '${widget.withCourse}', label: 'En cours', color: fg),
+                    _HeroStat(
+                        value: '${widget.withCourse}',
+                        label: 'En cours',
+                        color: fg),
                   ],
                 ),
               ],
@@ -529,7 +551,10 @@ class _WavePainter extends CustomPainter {
     path.moveTo(0, baseHeight);
 
     for (double x = 0; x <= size.width; x++) {
-      double y = math.sin((x / wavelength * 2 * math.pi) + (waveValue * 2 * math.pi)) * amplitude + baseHeight;
+      double y =
+          math.sin((x / wavelength * 2 * math.pi) + (waveValue * 2 * math.pi)) *
+                  amplitude +
+              baseHeight;
       path.lineTo(x, y);
     }
 
@@ -545,11 +570,11 @@ class _WavePainter extends CustomPainter {
       oldDelegate.waveValue != waveValue || oldDelegate.fillLevel != fillLevel;
 }
 
-
 class _HeroStat extends StatelessWidget {
   final String value, label;
   final Color color;
-  const _HeroStat({required this.value, required this.label, required this.color});
+  const _HeroStat(
+      {required this.value, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -565,9 +590,7 @@ class _HeroStat extends StatelessWidget {
           children: [
             Text(value,
                 style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: color)),
+                    fontSize: 20, fontWeight: FontWeight.w900, color: color)),
             Text(label,
                 style: TextStyle(
                     fontSize: 10,
@@ -596,7 +619,8 @@ class _FavChip extends StatelessWidget {
       child: Container(
         width: 130,
         decoration: BoxDecoration(
-            color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
+            color: cs.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(20)),
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -613,14 +637,17 @@ class _FavChip extends StatelessWidget {
                 const Spacer(),
                 GestureDetector(
                   onTap: () => svc.toggleFavorite(room.id),
-                  child: const Icon(Icons.star_rounded, color: Colors.orange, size: 18),
+                  child: const Icon(Icons.star_rounded,
+                      color: Colors.orange, size: 18),
                 ),
               ],
             ),
             const SizedBox(height: 10),
             Text(room.name,
                 style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w800, color: cs.onSurface)),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: cs.onSurface)),
             const SizedBox(height: 2),
             Text(_statusLabel(room),
                 style: TextStyle(
@@ -632,100 +659,207 @@ class _FavChip extends StatelessWidget {
   }
 }
 
-class _RoomCard extends StatelessWidget {
-  final Classroom room;
-  final ClassroomService svc;
-  const _RoomCard({required this.room, required this.svc});
+// ─── Corridor / Floor breakdown ──────────────────────────────────────────────
+class _CorridorCard extends StatelessWidget {
+  final int corridor;
+  final Map<int, List<Classroom>> floorMap;
+  const _CorridorCard({required this.corridor, required this.floorMap});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final col = _statusColor(context, room);
-    final bg = _statusBg(context, room);
-    final isFav = svc.isFavorite(room.id);
-    final isFree = room.currentPeople == 0 && !room.hasCourse;
+    final sortedFloors = floorMap.keys.toList()..sort();
+    final allRooms = floorMap.values.expand((r) => r).toList();
+    final freeCount =
+        allRooms.where((r) => r.currentPeople == 0 && !r.hasCourse).length;
+    final total = allRooms.length;
 
-    String subtitle = room.typeLabel;
-    if (isFree) {
-      if (room.nextCourseStart != null) {
-        final now = DateTime.now();
-        final isToday = room.nextCourseStart!.day == now.day &&
-            room.nextCourseStart!.month == now.month &&
-            room.nextCourseStart!.year == now.year;
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  corridor > 0 ? 'Épi $corridor' : "Rue",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: cs.onPrimaryContainer,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: freeCount > 0
+                      ? Colors.green.withValues(alpha: 0.15)
+                      : cs.errorContainer.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$freeCount libre${freeCount > 1 ? 's' : ''} / $total',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: freeCount > 0 ? Colors.green : cs.error,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Floors
+          for (int i = 0; i < sortedFloors.length; i++) ...[
+            if (i > 0)
+              Divider(
+                height: 16,
+                thickness: 1,
+                color: cs.outlineVariant.withValues(alpha: 0.4),
+              ),
+            _FloorRow(
+                floor: sortedFloors[i], rooms: floorMap[sortedFloors[i]]!),
+          ],
+        ],
+      ),
+    );
+  }
+}
 
-        if (isToday) {
-          subtitle =
-              'Libre jusqu\'à ${DateFormat('HH:mm').format(room.nextCourseStart!)}';
-        } else {
-          subtitle =
-              'Demain à ${DateFormat('HH:mm').format(room.nextCourseStart!)}';
-        }
-      } else {
-        subtitle = 'Aucun cours prochainement';
-      }
-    }
+class _FloorRow extends StatelessWidget {
+  final int floor;
+  final List<Classroom> rooms;
+  const _FloorRow({required this.floor, required this.rooms});
 
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final total = rooms.length;
+    final freeRooms =
+        rooms.where((r) => r.currentPeople == 0 && !r.hasCourse).toList();
+    final freeCount = freeRooms.length;
+    final pct = total == 0 ? 0.0 : (total - freeCount) / total;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Étage $floor',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: pct,
+                  minHeight: 6,
+                  backgroundColor: Colors.green.withValues(alpha: 0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    pct > 0.7
+                        ? cs.error
+                        : pct > 0.4
+                            ? Colors.orange
+                            : Colors.green,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '$freeCount/$total',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        if (freeRooms.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              ...freeRooms.take(3).map((r) => _FreeRoomChip(room: r)),
+              if (freeRooms.length > 3) _MoreChip(count: freeRooms.length - 3),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _FreeRoomChip extends StatelessWidget {
+  final Classroom room;
+  const _FreeRoomChip({required this.room});
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => RoomDetailSheet.show(context, room),
       child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-            color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
-        padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
-        child: Row(
-          children: [
-            // Icon
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                  color: bg, borderRadius: BorderRadius.circular(16)),
-              child: Icon(_typeIcon(room.type), color: col, size: 22),
-            ),
-            const SizedBox(width: 14),
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(room.name,
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w800, color: cs.onSurface)),
-                  const SizedBox(height: 3),
-                  Text(
-                      '$subtitle · Étage ${room.floor} · Épi ${room.corridor}',
-                      style: TextStyle(
-                          fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
-                ],
-              ),
-            ),
-            // Status badge
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: bg, borderRadius: BorderRadius.circular(20)),
-                  child: Text(_statusLabel(room),
-                      style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: col,
-                          letterSpacing: .3)),
-                ),
-                const SizedBox(height: 6),
-                GestureDetector(
-                  onTap: () => svc.toggleFavorite(room.id),
-                  child: Icon(
-                    isFav ? Icons.star_rounded : Icons.star_border_rounded,
-                    color: isFav ? Colors.orange : cs.onSurfaceVariant,
-                    size: 22,
-                  ),
-                ),
-              ],
-            ),
-          ],
+          color: Colors.green.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+        ),
+        child: Text(
+          room.name,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Colors.green,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MoreChip extends StatelessWidget {
+  final int count;
+  const _MoreChip({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '+$count autres',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: cs.onSurfaceVariant,
         ),
       ),
     );
