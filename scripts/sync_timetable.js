@@ -11,7 +11,7 @@
  *
  * iCal URL template:
  *   https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp
- *     ?resources={icalResourceId}&projectId=1&calType=ical&nbWeeks=4&displayConfigId=8
+ *     ?resources={icalResourceId}&projectId=2&calType=ical&nbWeeks=4&displayConfigId=8
  */
 
 "use strict";
@@ -49,7 +49,7 @@ const ICAL_BASE_URL =
 function buildIcalUrl(resourceId) {
   const params = new URLSearchParams({
     resources: resourceId,
-    projectId: "1",
+    projectId: "2",
     calType: "ical",
     nbWeeks: "4",
     displayConfigId: "8",
