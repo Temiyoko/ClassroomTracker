@@ -10,7 +10,7 @@ class TimetableService {
   Future<CourseDetail?> fetchCurrentCourse(String resourceId) async {
     final url = Uri.parse(_baseUrl).replace(queryParameters: {
       'resources': resourceId,
-      'projectId': '1',
+      'projectId': '2',
       'calType': 'ical',
       'nbWeeks': '4',
       'displayConfigId': '8',
